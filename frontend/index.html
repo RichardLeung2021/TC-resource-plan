@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lucky resource plan</title>
+<title>Live Team Resource Plan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -218,7 +218,7 @@ dialog .acts{display:flex;flex-direction:row-reverse;justify-content:flex-start;
 <body>
 <header class="top">
   <div class="brand">
-    <h1>Lucky resource plan</h1>
+    <h1>Live Team Resource Plan</h1>
     <p id="sub">Weekly FTE by project</p>
   </div>
   <div class="spacer"></div>
@@ -909,7 +909,7 @@ $('#exportBtn').addEventListener('click',async()=>{
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Name','Role','Location','Peak weekly FTE',...wl],...peopleSorted().map(p=>{ const w=(load.get(p.id)||{w:zeros()}).w; return [p.name,p.role,p.region,Math.max(0,...w),...w]; })]),'Team');
   const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
   const d=new Date(); const stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
-  try{ await S.dl.save({filename:`Lucky_Resource_Plan_${stamp}.xlsx`,data:buf}); toast('Excel file saved.'); }
+  try{ await S.dl.save({filename:`Live_Team_Resource_Plan_${stamp}.xlsx`,data:buf}); toast('Excel file saved.'); }
   catch(e){ if(e&&e.code==='declined') return; toast('The Excel file could not be saved here.'); }
 });
 

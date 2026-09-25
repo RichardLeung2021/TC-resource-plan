@@ -1,4 +1,4 @@
-# Lucky resource plan on AWS
+# Live Team Resource Plan on AWS
 
 This package runs the Lucky resource plan web page on your own AWS account. It includes the page, a small API, and the current plan data: 30 projects, 65 people, 321 resource rows, and a calendar of 74 weeks.
 
