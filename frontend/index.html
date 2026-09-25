@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lucky resource plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#F4F6F4; --surface:#FFFFFF; --ink:#1B2826; --muted:#5C6C68; --line:#DCE3E0; --line2:#C4CFCB;
+  --felt:#0E5A46; --felt-ink:#FFFFFF; --felt-soft:#E1EFE8; --win:#EEF5F0;
+  --brass:#A4741C; --brass-soft:#F6E7C8; --red:#B3361F; --red-soft:#F8DDD6;
+  --sans:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --cond:'Barlow Semi Condensed','Barlow',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1715; --surface:#15201D; --ink:#E3ECE8; --muted:#94A6A1; --line:#26352F; --line2:#34463F;
+    --felt:#46A887; --felt-ink:#04130D; --felt-soft:#1B3A30; --win:#18302A;
+    --brass:#D6A74B; --brass-soft:#3B2F15; --red:#F07C65; --red-soft:#4B221A; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1715; --surface:#15201D; --ink:#E3ECE8; --muted:#94A6A1; --line:#26352F; --line2:#34463F;
+  --felt:#46A887; --felt-ink:#04130D; --felt-soft:#1B3A30; --win:#18302A;
+  --brass:#D6A74B; --brass-soft:#3B2F15; --red:#F07C65; --red-soft:#4B221A; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans);display:flex;flex-direction:column;overflow:hidden}
+input,select,textarea,button{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+[hidden]{display:none!important}
+
+/* header */
+.top{display:flex;align-items:flex-end;gap:12px 20px;padding:16px 20px 12px;flex-wrap:wrap}
+.brand h1{margin:0;font:700 24px/1.05 var(--sans);letter-spacing:-.015em}
+.brand p{margin:3px 0 0;color:var(--muted);font-size:14px}
+.spacer{flex:1}
+.save{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);min-height:32px}
+.save i{width:8px;height:8px;border-radius:50%;background:var(--felt)}
+.save.busy i{background:var(--brass)}
+.save.err i{background:var(--red)}
+.tabs{display:flex;gap:2px;padding:0 20px;border-bottom:1px solid var(--line);overflow-x:auto;flex:none}
+.tabs button{border:0;background:none;padding:10px 12px 9px;font:600 15px var(--sans);color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--felt)}
+.banner{margin:10px 20px 0;padding:9px 12px;border-radius:6px;background:var(--brass-soft);color:var(--ink);font-size:14px;display:flex;gap:12px;align-items:center}
+.banner button{margin-left:auto;background:none;border:0;color:var(--muted);font-weight:600}
+
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel{flex:1;min-height:0;display:none;flex-direction:column}
+.panel.on{display:flex}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:12px 20px;flex:none}
+.toolbar .count{color:var(--muted);font-size:14px}
+.inp,.sel{height:34px;border:1px solid var(--line2);border-radius:6px;background:var(--surface);padding:0 10px;font-size:14px;max-width:100%}
+.inp.search{width:260px}
+.check{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.btn{height:34px;border:1px solid var(--line2);background:var(--surface);border-radius:6px;padding:0 13px;font-weight:600;font-size:14px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.btn.danger{color:var(--red)}
+.btn.small{height:28px;padding:0 9px;font-size:13px}
+.scroll{flex:1;min-height:0;overflow:auto;margin:0 20px 16px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.state{margin:48px auto;max-width:460px;text-align:center;color:var(--muted);padding:0 20px}
+.state h2{color:var(--ink);font:600 20px/1.3 var(--sans);margin:0 0 6px}
+
+/* plan grid */
+table.grid{border-collapse:separate;border-spacing:0;font-family:var(--cond);font-size:13.5px}
+.grid th,.grid td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;height:32px;white-space:nowrap;background:var(--surface)}
+.grid thead th{position:sticky;z-index:3;font-weight:600;color:var(--muted);background:var(--surface)}
+.grid thead tr.m th{top:0;height:26px;color:var(--ink);text-align:left;padding-left:8px;font-weight:700}
+.grid thead tr.d th{top:26px;height:34px;font-size:12px;line-height:1.1}
+.grid thead tr.t th{top:60px;height:28px;background:var(--felt-soft);color:var(--ink);font-weight:700}
+.grid thead tr.d th.sl{text-align:left;padding-left:10px;font-size:13px}
+.grid .sl{position:sticky;z-index:2}
+.grid thead .sl{z-index:5}
+.c0{left:0;width:180px;min-width:180px;max-width:180px}
+.c1{left:180px;width:170px;min-width:170px;max-width:170px}
+.c2{left:350px;width:112px;min-width:112px;max-width:112px}
+.c3{left:462px;width:62px;min-width:62px;max-width:62px;text-align:center}
+.grid .c3{border-right:2px solid var(--line2)}
+.grid th.w,.grid td.w{width:44px;min-width:44px;max-width:44px;text-align:center}
+.grid th.w small{display:block;font-weight:500;opacity:.8}
+.grid th.mstart,.grid td.mstart{border-left:1px solid var(--line2)}
+tr.b td{background:var(--felt);color:var(--felt-ink);height:38px;border-bottom-color:var(--felt)}
+tr.b td.w{font-size:12px;font-weight:600}
+tr.b td.bh{left:0;padding:0 10px 0 4px;white-space:nowrap}
+.bh .btog{border:0;background:none;width:24px;height:24px;padding:0;color:inherit;font-size:12px;vertical-align:middle}
+.bh strong{font:700 16px var(--sans);vertical-align:middle;letter-spacing:.01em}
+.bh .meta{margin-left:10px;font-size:13px;opacity:.85;vertical-align:middle}
+tr.g td{background:var(--bg);height:46px;border-top:1px solid var(--line2)}
+tr.g td.gh{left:0;padding:0 8px 0 4px;max-width:524px}
+.ghw{display:flex;align-items:center;gap:6px;max-width:514px}
+.ght{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}
+.ght strong,.ght .meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gh .tog{border:0;background:none;width:22px;height:22px;padding:0;color:var(--muted);font-size:12px;vertical-align:middle}
+.gh strong{font:700 14.5px var(--sans);vertical-align:middle}
+.gh .meta{color:var(--muted);font-size:12.5px}
+.gh .warn{color:var(--red);font-weight:600}
+.gh .add{flex:none}
+tr.g td.w{color:var(--muted);font-size:12px}
+tr.g td.w.win{background:var(--win)}
+.grid td.c0,.grid td.c1{padding:0}
+.pick{width:100%;height:31px;border:0;background:none;text-align:left;padding:0 8px;font:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.pick.none{color:var(--muted);font-style:italic}
+.pick:hover{background:var(--win)}
+.c0 .wrap{display:flex;align-items:center}
+.c0 .pick{flex:1;min-width:0}
+.more{border:0;background:none;width:26px;height:31px;color:var(--muted);font-size:16px;line-height:1;flex:none}
+.more:hover{color:var(--ink)}
+.picksel{width:100%;height:31px;border:0;background:var(--surface);font:inherit;padding:0 4px}
+td.c2{color:var(--muted);padding:0 8px!important;overflow:hidden;text-overflow:ellipsis}
+td.ro{padding:0 8px!important;overflow:hidden;text-overflow:ellipsis}
+td.ro.slot{color:var(--muted);font-style:italic}
+td.c3{font-weight:700}
+td.c{cursor:cell;font-variant-numeric:tabular-nums}
+td.c.win{background:var(--win)}
+td.c.h1{background:color-mix(in srgb,var(--felt) 22%,var(--surface))}
+td.c.h2{background:color-mix(in srgb,var(--felt) 40%,var(--surface))}
+td.c.h3{background:color-mix(in srgb,var(--felt) 60%,var(--surface));color:var(--felt-ink)}
+td.c.h4{background:var(--felt);color:var(--felt-ink);font-weight:600}
+td.c.out{background:var(--brass-soft);color:var(--ink);box-shadow:inset 0 -3px 0 var(--brass)}
+td.c:focus{outline:2px solid var(--brass);outline-offset:-2px}
+td.c input{width:100%;height:100%;border:0;text-align:center;background:var(--surface);color:var(--ink);font:inherit;padding:0;outline:2px solid var(--brass);outline-offset:-2px}
+tr.empty td.note{padding:0 10px!important;color:var(--muted);font-style:italic;left:0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid var(--line)}
+
+/* forms tables */
+table.form{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:14px}
+.form th{position:sticky;top:0;z-index:2;background:var(--surface);text-align:left;font-weight:600;color:var(--muted);padding:9px 8px;border-bottom:1px solid var(--line2);white-space:nowrap}
+.form td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.sort{border:0;background:none;padding:0;font:inherit;color:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+.sort.on{color:var(--ink)}
+.sort span{font-size:11px;opacity:.7}
+.form th.num{text-align:right}
+.form td.num{text-align:right;font-family:var(--cond);font-variant-numeric:tabular-nums;padding-top:12px;color:var(--muted)}
+.form .ed{width:100%;min-height:32px;border:1px solid transparent;border-radius:5px;background:transparent;padding:5px 7px}
+.form .ed:hover{border-color:var(--line)}
+.form .ed:focus{border-color:var(--line2);background:var(--surface)}
+.form textarea.ed{resize:vertical;min-height:32px;line-height:1.35}
+.form select.ed{padding:0 4px}
+.form input[type=date].ed{min-width:140px}
+.flag{display:inline-block;margin-top:4px;font-size:12px;color:var(--red);font-weight:600}
+.split{display:flex;gap:16px;flex:1;min-height:0;padding:0 20px 16px}
+.split .scroll{margin:0}
+.side{width:300px;flex:none;overflow:auto;display:flex;flex-direction:column;gap:16px}
+.box{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px 14px}
+.box h3{margin:0 0 2px;font:700 16px var(--sans)}
+.box p{margin:0 0 10px;color:var(--muted);font-size:13px}
+.list-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.list-row .inp{flex:1;min-width:0;height:32px}
+.x{border:0;background:none;color:var(--muted);width:28px;height:28px;border-radius:5px;font-size:16px}
+.x:hover{color:var(--red);background:var(--red-soft)}
+td.peak.over{color:var(--red);font-weight:700}
+
+/* allocation */
+td.a{font-variant-numeric:tabular-nums}
+td.a.h1{background:color-mix(in srgb,var(--felt) 22%,var(--surface))}
+td.a.h2{background:color-mix(in srgb,var(--felt) 40%,var(--surface))}
+td.a.h3{background:color-mix(in srgb,var(--felt) 60%,var(--surface));color:var(--felt-ink)}
+td.a.h4{background:var(--felt);color:var(--felt-ink);font-weight:600}
+td.a.over{background:var(--red);color:#fff;font-weight:700}
+.grid td.pname{padding:0 8px!important;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+
+/* menu + dialog + toast */
+.psearch{width:100%;min-width:0;height:31px;border:0;padding:0 8px;background:var(--surface);color:var(--ink);font:inherit;outline:2px solid var(--brass);outline-offset:-2px}
+#plist{position:fixed;z-index:55;margin:0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:320px;overflow:auto;width:320px;font:14px/1.3 var(--sans)}
+#plist li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:7px 10px;border-radius:5px;cursor:pointer}
+#plist li small{color:var(--muted);font-size:12.5px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#plist li b{font-weight:700;color:var(--felt)}
+#plist li[aria-selected="true"]{background:var(--win)}
+#plist li.new{color:var(--felt);font-weight:600}
+#plist li.clear{color:var(--muted)}
+#plist li.none{color:var(--muted);cursor:default;font-style:italic}
+.menu{position:fixed;z-index:50;background:var(--surface);border:1px solid var(--line2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px;min-width:230px}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:5px;font-size:14px}
+.menu button:hover,.menu button:focus-visible{background:var(--win)}
+.menu button.danger{color:var(--red)}
+dialog{border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);padding:18px 20px;width:min(440px,calc(100vw - 32px))}
+dialog::backdrop{background:rgba(10,20,17,.45)}
+dialog h2{margin:0 0 4px;font:700 19px var(--sans)}
+dialog p{margin:0 0 12px;color:var(--muted);font-size:14px}
+dialog label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+dialog .inp,dialog .sel{width:100%}
+dialog .row2{display:flex;gap:10px}
+dialog .row2>div{flex:1;min-width:0}
+dialog .acts{display:flex;flex-direction:row-reverse;justify-content:flex-start;gap:8px;margin-top:18px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:7px;font-size:14px;z-index:60;max-width:calc(100vw - 32px)}
+
+@media (max-width:760px){
+  .top{padding:12px 14px 8px}
+  .tabs{padding:0 10px}
+  .toolbar{padding:10px 14px}
+  .scroll{margin:0 10px 10px}
+  .inp.search{width:100%}
+  #p-plan .legend{display:none}
+  tr.g td.gh,.ghw{max-width:286px}
+  .split{flex-direction:column;padding:0 10px 10px;overflow:auto}
+  .split .scroll{min-height:360px;flex:none}
+  .side{width:auto;overflow:visible}
+  .grid .c2,.grid .c3{left:auto}
+  .c0{width:150px;min-width:150px;max-width:150px}
+  .c1{left:150px;width:140px;min-width:140px;max-width:140px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Lucky resource plan</h1>
+    <p id="sub">Weekly FTE by project</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="save" id="save" aria-live="polite"><i></i><span>Connecting</span></div>
+  <button class="btn" id="exportBtn" hidden>Export to Excel</button>
+</header>
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="plan" aria-selected="true">Resource plan</button>
+  <button role="tab" data-tab="projects" aria-selected="false">Projects</button>
+  <button role="tab" data-tab="team" aria-selected="false">Team</button>
+  <button role="tab" data-tab="alloc" aria-selected="false">Allocation</button>
+</nav>
+<div id="banner" class="banner" hidden><span></span><button type="button" aria-label="Dismiss">Dismiss</button></div>
+<main>
+  <section class="panel on" id="p-plan">
+    <div class="toolbar">
+      <input class="inp search" id="q" type="search" placeholder="Search project, person or role">
+      <select class="sel" id="fBrand" aria-label="Brand"></select>
+      <select class="sel" id="fCat"></select>
+      <select class="sel" id="fReg"></select>
+      <select class="sel" id="fPerson"></select>
+      <select class="sel" id="fYear" aria-label="Year shown"></select>
+      <button class="btn small" id="addYear" hidden></button>
+      <label class="check"><input type="checkbox" id="fHide"> Hide unassigned rows</label>
+      <button class="btn small" id="collapseAll">Collapse all</button>
+      <button class="btn small" id="expandAll">Expand all</button>
+      <div class="spacer"></div>
+      <div class="legend">
+        <span><b style="background:var(--win)"></b>Project dates</span>
+        <span><b style="background:var(--felt)"></b>FTE planned</span>
+        <span><b style="background:var(--brass-soft);box-shadow:inset 0 -3px 0 var(--brass)"></b>Outside project dates</span>
+      </div>
+    </div>
+    <div class="scroll" id="planScroll"><div class="state" id="planState"><h2>Loading the plan</h2><p>Fetching projects, people and weekly FTE.</p></div><table class="grid" id="planGrid" hidden></table></div>
+  </section>
+
+  <section class="panel" id="p-projects">
+    <div class="toolbar">
+      <button class="btn primary" id="addProject">Add project</button>
+      <span class="count" id="projCount"></span>
+    </div>
+    <div class="split">
+      <div class="scroll"><table class="form" id="projTable"></table></div>
+      <div class="side"><div class="box" id="brandBox"></div><div class="box" id="catBox"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-team">
+    <div class="toolbar">
+      <button class="btn primary" id="addPerson">Add person</button>
+      <input class="inp search" id="tq" type="search" placeholder="Filter by name">
+      <select class="sel" id="tRole" aria-label="Filter by role"></select>
+      <select class="sel" id="tReg" aria-label="Filter by location"></select>
+      <span class="count" id="teamCount"></span>
+    </div>
+    <div class="split">
+      <div class="scroll"><table class="form" id="teamTable"></table></div>
+      <div class="side"><div class="box" id="regBox"></div><div class="box" id="roleBox"></div></div>
+    </div>
+  </section>
+
+  <section class="panel" id="p-alloc">
+    <div class="toolbar">
+      <select class="sel" id="aBrand" aria-label="Brand"></select>
+      <select class="sel" id="aYear" aria-label="Year shown"></select>
+      <select class="sel" id="aReg"></select>
+      <label class="check"><input type="checkbox" id="aOnly" checked> Only people with planned FTE</label>
+      <div class="spacer"></div>
+      <div class="legend">
+        <span><b style="background:var(--felt)"></b>Up to 1.0 FTE</span>
+        <span><b style="background:var(--red)"></b>Over 1.0 FTE</span>
+      </div>
+    </div>
+    <div class="scroll"><div class="state" id="allocState" hidden></div><table class="grid" id="allocGrid"></table></div>
+  </section>
+</main>
+
+<div class="menu" id="menu" hidden role="menu"></div>
+<ul id="plist" role="listbox" aria-label="Matching people" hidden></ul>
+
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script src="store.js"></script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const DAY=864e5;
+const S={projects:new Map(),people:new Map(),resources:new Map(),
+  lists:{regions:[],roles:[],categories:[],brands:['Lucky','EEZE','PT','Choice'],weekStart:'2026-08-03',weeks:48},
+  loaded:{p:false,u:false,r:false,l:false},db:null,dl:null,readOnly:false,noDb:false};
+const ui={tab:'plan',q:'',cat:'',region:'',person:'',hideEmpty:false,collapsed:new Set(),focus:null,tq:'',aReg:'',aOnly:true,brand:'',aBrand:'',bcollapsed:new Set(),year:'',tRole:'',tReg:'',tSort:{k:'name',d:1}};
+try{const t=localStorage.getItem('lrp.tab'); if(t) ui.tab=t;}catch(e){}
+
+/* ---------- helpers ---------- */
+function parseD(s){ if(!s) return null; const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m?Date.UTC(+m[1],+m[2]-1,+m[3]):null; }
+function weekStart(i){ return (parseD(S.lists.weekStart)||Date.UTC(2026,7,3))+i*7*DAY; }
+function nW(){ return S.lists.weeks||48; }
+function yearsInCal(){ const ys=[]; for(let i=0;i<nW();i++){ const y=new Date(weekStart(i)).getUTCFullYear(); if(ys[ys.length-1]!==y) ys.push(y); } return ys; }
+function vis(){ const W=nW(), out=[]; for(let i=0;i<W;i++) if(!ui.year || new Date(weekStart(i)).getUTCFullYear()===+ui.year) out.push(i); if(!out.length){ ui.year=''; return vis(); } return out; }
+function pBrand(p){ return (p&&p.brand)||S.lists.brands[0]||'Lucky'; }
+function brandOrder(ps){ const b=[...S.lists.brands]; ps.forEach(p=>{ const x=pBrand(p); if(!b.includes(x)) b.push(x); }); return b; }
+function effRole(r){ const p=r&&r.personId?S.people.get(r.personId):null; return (p&&p.role)||(r&&r.role)||''; }
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(s){ const t=parseD(s); if(t==null) return 'N/A'; const d=new Date(t); return d.getUTCDate()+' '+MON[d.getUTCMonth()]+' '+String(d.getUTCFullYear()).slice(2); }
+function wkLabel(i){ const d=new Date(weekStart(i)); return d.getUTCDate()+' '+MON[d.getUTCMonth()]+' '+d.getUTCFullYear(); }
+function inWin(p,i){ const e=parseD(p.end); if(e==null) return false; const ws=weekStart(i), we=ws+6*DAY; const s=parseD(p.start); return ws<=e && (s==null || we>=s); }
+function fmt(v){ if(!v) return ''; return String(Math.round(v*100)/100); }
+function fmt1(v){ return v? (Math.round(v*10)/10).toFixed(1) : ''; }
+function heat(v){ return v<=0?'':v<=.25?'h1':v<=.5?'h2':v<=.75?'h3':'h4'; }
+function zeros(){ return new Array(nW()).fill(0); }
+function sortedProjects(){ return [...S.projects.values()].sort((a,b)=>(a.order||0)-(b.order||0)||String(a.name).localeCompare(b.name)); }
+function roleIdx(r){ const i=S.lists.roles.indexOf(r); return i<0?999:i; }
+function rowsOf(pid){ return [...S.resources.values()].filter(r=>r.project===pid).sort((a,b)=>(a.order||0)-(b.order||0)); }
+function peopleSorted(){ return [...S.people.values()].sort((a,b)=>String(a.name).localeCompare(b.name)); }
+function newId(col){ return S.db.collection(col).doc().id; }
+function strip(o){ const c={...o}; delete c.id; return c; }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,3800); }
+function banner(msg){ const b=$('#banner'); b.querySelector('span').textContent=msg; b.hidden=false; }
+$('#banner button').addEventListener('click',()=>$('#banner').hidden=true);
+
+/* ---------- writes ---------- */
+const chains=new Map(); let inflight=0, lastErr=false, active=0; const waiters=[];
+async function slot(){ while(active>=4) await new Promise(r=>waiters.push(r)); active++; }
+function release(){ active--; const w=waiters.shift(); if(w) w(); }
+function setSave(){
+  const el=$('#save'), sp=el.querySelector('span');
+  el.className='save'+(inflight?' busy':lastErr?' err':'');
+  if(S.noDb){ sp.textContent='Saving unavailable'; el.className='save err'; return; }
+  if(S.readOnly){ sp.textContent='View only'; return; }
+  sp.textContent= inflight? 'Saving…' : lastErr? 'Last change not saved' : 'All changes saved';
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+async function doOp(path,op,data){
+  const ref=S.db.doc(path);
+  const run=()=> op==='del'? ref.delete() : ref.set(data);
+  try{ return await run(); }catch(e){ if(e&&e.code==='unavailable'){ await sleep(400+Math.random()*700); return run(); } throw e; }
+}
+function write(path,op,data){
+  if(S.readOnly||!S.db) return Promise.resolve();
+  inflight++; setSave();
+  const prev=chains.get(path)||Promise.resolve();
+  const p=prev.catch(()=>{}).then(async()=>{ await slot(); try{ await doOp(path,op,data); lastErr=false; } finally{ release(); } })
+    .catch(e=>{ const c=e&&e.code;
+      if(c==='invalid_argument'){ S.readOnly=true; banner('You can view this plan but not change it. Ask the owner for edit access to make changes.'); render(); }
+      else if(c==='quota_exceeded'){ lastErr=true; banner('The plan has reached its storage limit. Delete unused rows or projects, then try again.'); }
+      else if(c==='revoked'){ lastErr=true; banner('This page no longer has access to the plan. Reopen it from its link.'); }
+      else { lastErr=true; banner('A change could not be saved. Check your connection and make the change again.'); }
+    })
+    .finally(()=>{ inflight--; setSave(); if(chains.get(path)===p) chains.delete(path); });
+  chains.set(path,p); return p;
+}
+function saveDoc(col,obj){ const key={projects:'projects',people:'people',resources:'resources'}[col]; S[key].set(obj.id,obj); return write(col+'/'+obj.id,'set',strip(obj)); }
+function delDoc(col,id){ S[col].delete(id); return write(col+'/'+id,'del'); }
+function saveLists(){ const l=S.lists; return write('config/lists','set',{regions:l.regions,roles:l.roles,categories:l.categories,brands:l.brands,weekStart:l.weekStart,weeks:l.weeks}); }
+
+/* FTE edits are coalesced per row */
+const pendingFte=new Map(), fteTimers=new Map();
+function setFte(rid,pairs){
+  const r=S.resources.get(rid); if(!r) return;
+  const f=(pendingFte.get(rid)||r.fte||zeros()).slice(); while(f.length<nW()) f.push(0);
+  for(const [i,v] of pairs) f[i]=v;
+  pendingFte.set(rid,f); S.resources.set(rid,{...r,fte:f});
+  clearTimeout(fteTimers.get(rid)); fteTimers.set(rid,setTimeout(()=>flushFte(rid),500));
+  schedule();
+}
+function flushFte(rid){ fteTimers.delete(rid); const f=pendingFte.get(rid); pendingFte.delete(rid); const r=S.resources.get(rid); if(!r||!f) return; write('resources/'+rid,'set',strip({...r,fte:f})); }
+window.addEventListener('pagehide',()=>{ for(const id of [...fteTimers.keys()]){ clearTimeout(fteTimers.get(id)); flushFte(id); } });
+
+/* ---------- render scheduling ---------- */
+let pendingRender=false, rafId=0;
+function isEditing(){ const a=document.activeElement; return !!(a && a.classList && (a.classList.contains('ed')||a.classList.contains('picksel'))); }
+function schedule(){ if(isEditing()){ pendingRender=true; return; } if(rafId) return; rafId=requestAnimationFrame(()=>{ rafId=0; render(); }); }
+document.addEventListener('focusout',()=>setTimeout(()=>{ if(pendingRender && !isEditing()){ pendingRender=false; schedule(); } },0));
+
+function allLoaded(){ const l=S.loaded; return l.p&&l.u&&l.r&&l.l; }
+function render(){
+  pendingRender=false;
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===ui.tab)));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+ui.tab));
+  setSave();
+  if(!allLoaded()) return;
+  { const f=new Date(weekStart(0)), l=new Date(weekStart(nW()-1)); $('#sub').textContent=`Weekly FTE by project, ${MON[f.getUTCMonth()]} ${f.getUTCFullYear()} to ${MON[l.getUTCMonth()]} ${l.getUTCFullYear()}`; }
+  fillFilters();
+  if(ui.tab==='plan') renderPlan();
+  else if(ui.tab==='projects') renderProjects();
+  else if(ui.tab==='team') renderTeam();
+  else renderAlloc();
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{ ui.tab=b.dataset.tab; try{localStorage.setItem('lrp.tab',ui.tab);}catch(e){} closeMenu(); render(); }));
+
+/* ---------- filters ---------- */
+function opts(list,sel,all){ return `<option value="">${esc(all)}</option>`+list.map(v=>`<option value="${esc(v.v)}"${v.v===sel?' selected':''}>${esc(v.t)}</option>`).join(''); }
+function fillFilters(){
+  const bl=brandOrder([...S.projects.values()]).map(b=>({v:b,t:b}));
+  $('#fBrand').innerHTML=opts(bl,ui.brand,'All brands'); $('#aBrand').innerHTML=opts(bl,ui.aBrand,'All brands');
+  const ys=yearsInCal().map(y=>({v:String(y),t:String(y)}));
+  $('#fYear').innerHTML=opts(ys,ui.year,'All years'); $('#aYear').innerHTML=opts(ys,ui.year,'All years');
+  const ny=nextYear(); const ab=$('#addYear'); ab.hidden=S.readOnly; ab.textContent='Add '+ny;
+  $('#tRole').innerHTML=opts(S.lists.roles.map(c=>({v:c,t:c})).concat([{v:'__none',t:'No role'}]),ui.tRole,'All roles');
+  $('#tReg').innerHTML=opts(S.lists.regions.map(c=>({v:c,t:c})).concat([{v:'__none',t:'No location'}]),ui.tReg,'All locations');
+  $('#fCat').innerHTML=opts(S.lists.categories.map(c=>({v:c,t:c})),ui.cat,'All categories');
+  $('#fReg').innerHTML=opts(S.lists.regions.map(c=>({v:c,t:c})),ui.region,'All locations');
+  $('#fPerson').innerHTML=opts(peopleSorted().map(p=>({v:p.id,t:p.name})),ui.person,'All people');
+  $('#aReg').innerHTML=opts(S.lists.regions.map(c=>({v:c,t:c})),ui.aReg,'All locations');
+}
+$('#q').addEventListener('input',e=>{ ui.q=e.target.value.trim().toLowerCase(); clearTimeout(ui._qt); ui._qt=setTimeout(render,150); });
+$('#fCat').addEventListener('change',e=>{ ui.cat=e.target.value; render(); });
+$('#fReg').addEventListener('change',e=>{ ui.region=e.target.value; render(); });
+$('#fPerson').addEventListener('change',e=>{ ui.person=e.target.value; render(); });
+$('#fHide').addEventListener('change',e=>{ ui.hideEmpty=e.target.checked; render(); });
+$('#collapseAll').addEventListener('click',()=>{ S.projects.forEach((p,id)=>ui.collapsed.add(id)); render(); });
+$('#expandAll').addEventListener('click',()=>{ ui.collapsed.clear(); render(); });
+$('#tq').addEventListener('input',e=>{ ui.tq=e.target.value.trim().toLowerCase(); clearTimeout(ui._tt); ui._tt=setTimeout(render,150); });
+$('#aReg').addEventListener('change',e=>{ ui.aReg=e.target.value; render(); });
+$('#fBrand').addEventListener('change',e=>{ ui.brand=e.target.value; render(); });
+$('#aBrand').addEventListener('change',e=>{ ui.aBrand=e.target.value; render(); });
+$('#fYear').addEventListener('change',e=>{ ui.year=e.target.value; render(); });
+$('#aYear').addEventListener('change',e=>{ ui.year=e.target.value; render(); });
+$('#tRole').addEventListener('change',e=>{ ui.tRole=e.target.value; render(); });
+$('#tReg').addEventListener('change',e=>{ ui.tReg=e.target.value; render(); });
+function nextYear(){ return new Date(weekStart(nW()-1)).getUTCFullYear()+1; }
+$('#addYear').addEventListener('click',()=>{
+  if(S.readOnly) return;
+  const y=nextYear(), end=Date.UTC(y,11,31); let n=nW(); while(weekStart(n)<=end) n++;
+  const added=n-nW(); if(added<=0) return;
+  confirmDialog('Add '+y+' to the calendar?',`This adds ${added} weeks, from the week commencing ${wkLabel(nW())} to the week commencing ${wkLabel(n-1)}. They appear on the Resource plan and Allocation tabs, starting at zero FTE. Existing weeks are not changed.`,'Add '+y,()=>{
+    S.lists.weeks=n; saveLists(); ui.year=String(y); toast(y+' added. Showing '+y+' now; choose All years to see the whole calendar.'); schedule(); });
+  const ok=dform.querySelector('.danger-ok'); if(ok) ok.style.cssText='';
+});
+$('#aOnly').addEventListener('change',e=>{ ui.aOnly=e.target.checked; render(); });
+
+/* ---------- plan grid ---------- */
+function weekHeader(V){
+  let m='', d='', months=[];
+  for(const i of V){ const dt=new Date(weekStart(i)); const key=dt.getUTCFullYear()*12+dt.getUTCMonth(); if(!months.length||months[months.length-1].k!==key) months.push({k:key,n:1,label:MON[dt.getUTCMonth()]+' '+dt.getUTCFullYear(),i}); else months[months.length-1].n++; }
+  const starts=new Set(months.map(x=>x.i));
+  m=months.map(x=>`<th colspan="${x.n}" class="mstart">${esc(x.label)}</th>`).join('');
+  for(const i of V){ const dt=new Date(weekStart(i)); d+=`<th class="w${starts.has(i)?' mstart':''}" title="Week commencing ${esc(wkLabel(i))}">${dt.getUTCDate()}<small>W${i+1}</small></th>`; }
+  return {m,d,starts};
+}
+function rowVisible(r,p,qProj){
+  const person=r.personId?S.people.get(r.personId):null;
+  if(ui.hideEmpty && !person) return false;
+  if(ui.person && r.personId!==ui.person) return false;
+  if(ui.region && (!person||person.region!==ui.region)) return false;
+  if(ui.q && !qProj){ const hay=((person?person.name:'')+' '+effRole(r)).toLowerCase(); if(!hay.includes(ui.q)) return false; }
+  return true;
+}
+function renderPlan(){
+  const grid=$('#planGrid'), st=$('#planState');
+  const projects=sortedProjects();
+  if(!projects.length){ grid.hidden=true; st.hidden=false; st.innerHTML='<h2>No projects yet</h2><p>Add your first project on the Projects tab, then plan people against it here.</p>'; return; }
+  st.hidden=true; grid.hidden=false;
+  const W=nW(); const V=vis(); const {m,d,starts}=weekHeader(V);
+  const filtersOn=!!(ui.q||ui.person||ui.region||ui.hideEmpty);
+  const tot=new Array(W).fill(0); let body=''; let shownRows=0;
+  for(const bn of brandOrder(projects)){
+  if(ui.brand && bn!==ui.brand) continue;
+  const bw=new Array(W).fill(0); let pb=''; let np=0; const bcol=ui.bcollapsed.has(bn);
+  for(const p of projects){
+    if(pBrand(p)!==bn) continue;
+    if(ui.cat && p.category!==ui.cat) continue;
+    const qProj= ui.q && String(p.name).toLowerCase().includes(ui.q);
+    const rows=rowsOf(p.id).filter(r=>rowVisible(r,p,qProj));
+    if(filtersOn && !rows.length) continue;
+    const pw=new Array(W).fill(0);
+    for(const r of rows){ const f=r.fte||[]; for(const i of V){ const v=+f[i]||0; pw[i]+=v; tot[i]+=v; bw[i]+=v; } }
+    np++; if(bcol) continue;
+    const collapsed=ui.collapsed.has(p.id);
+    const e=parseD(p.end), s=parseD(p.start);
+    let warn=''; if(e!=null && s!=null && e<s) warn='End is before start'; else if(e!=null && e<weekStart(0)) warn='Ends before this calendar';
+    const meta=[p.category, fmtDate(p.start)+' to '+fmtDate(p.end), p.status].filter(Boolean).join(', ');
+    pb+=`<tr class="g" data-p="${esc(p.id)}"><td class="sl gh" colspan="4"><div class="ghw"><button class="tog" aria-expanded="${!collapsed}" aria-label="${collapsed?'Expand':'Collapse'} ${esc(p.name)}">${collapsed?'▶':'▼'}</button><div class="ght"><strong title="${esc(p.name)}">${esc(p.name)}</strong><span class="meta" title="${esc(meta)}">${warn?`<span class="warn">${esc(warn)}. </span>`:''}${esc(meta)}</span></div>${S.readOnly?'':`<button class="btn small add">Add person</button>`}</div></td>`;
+    for(const i of V) pb+=`<td class="w${inWin(p,i)?' win':''}${starts.has(i)?' mstart':''}">${fmt1(pw[i])}</td>`;
+    pb+='</tr>';
+    if(collapsed) continue;
+    if(!rows.length){ pb+=`<tr class="empty"><td class="sl note" colspan="4">No rows yet. Use Add person to plan someone on this project.</td>${'<td class="w"></td>'.repeat(V.length)}</tr>`; continue; }
+    for(const r of rows){
+      shownRows++;
+      const person=r.personId?S.people.get(r.personId):null; const f=r.fte||[]; let t=0; let cells='';
+      for(const i of V){ const v=+f[i]||0; t+=v; const w=inWin(p,i); let cls='w c'; if(v>0) cls+=' '+(w||e==null?heat(v):'out'); else if(w) cls+=' win'; if(starts.has(i)) cls+=' mstart';
+        cells+=`<td class="${cls}" tabindex="-1" data-i="${i}">${fmt(v)}</td>`; }
+      const role=effRole(r), slot=!(person&&person.role);
+      pb+=`<tr data-r="${esc(r.id)}"><td class="sl c0"><div class="wrap"><button class="pick${person?'':' none'}" data-k="person" title="${esc(person?person.name:'Choose a person')}">${esc(person?person.name:'Unassigned')}</button>${S.readOnly?'':'<button class="more" aria-label="Row actions">⋯</button>'}</div></td>`+
+        `<td class="sl c1 ro${slot?' slot':''}" title="${esc(slot&&role?'Role slot on this project. It changes to the person’s role once someone with a role is assigned.':role)}">${esc(role)}</td>`+
+        `<td class="sl c2">${esc(person&&person.region||'')}</td><td class="sl c3">${fmt1(t)}</td>${cells}</tr>`;
+    }
+  }
+  if(!np) continue;
+  const bmeta=np+' project'+(np>1?'s':'');
+  body+=`<tr class="b" data-b="${esc(bn)}"><td class="sl bh" colspan="4"><button class="btog" aria-expanded="${!bcol}" aria-label="${bcol?'Expand':'Collapse'} ${esc(bn)}">${bcol?'▶':'▼'}</button><strong>${esc(bn)}</strong><span class="meta">${bmeta}</span></td>`+V.map(i=>`<td class="w${starts.has(i)?' mstart':''}">${fmt1(bw[i])}</td>`).join('')+'</tr>'+pb;
+  }
+  if(!body) body=`<tr class="empty"><td class="sl note" colspan="4">Nothing matches these filters. Clear the search or filters to see all rows.</td>${'<td class="w"></td>'.repeat(V.length)}</tr>`;
+  const grand=tot.reduce((a,b)=>a+b,0);
+  const tr=V.map(i=>`<th class="w${starts.has(i)?' mstart':''}">${fmt1(tot[i])}</th>`).join('');
+  grid.innerHTML=`<thead><tr class="m"><th class="sl" style="left:0" colspan="4"></th>${m}</tr>`+
+    `<tr class="d"><th class="sl c0">Person</th><th class="sl c1">Role</th><th class="sl c2">Location</th><th class="sl c3" title="Total FTE-weeks for the weeks shown">Total</th>${d}</tr>`+
+    `<tr class="t"><th class="sl" style="left:0;text-align:left;padding-left:10px" colspan="3">Total FTE, rows shown</th><th class="sl c3">${fmt1(grand)}</th>${tr}</tr></thead><tbody>${body}</tbody>`;
+  if(ui.focus){ const td=grid.querySelector(`tr[data-r="${CSS.escape(ui.focus.rid)}"] td[data-i="${ui.focus.i}"]`); if(td && document.activeElement===document.body) td.focus({preventScroll:true}); }
+}
+
+const grid=$('#planGrid');
+grid.addEventListener('click',e=>{
+  const t=e.target;
+  const bt=t.closest('.btog'); if(bt){ const bn=bt.closest('tr').dataset.b; ui.bcollapsed.has(bn)?ui.bcollapsed.delete(bn):ui.bcollapsed.add(bn); render(); return; }
+  const tog=t.closest('.tog'); if(tog){ const pid=tog.closest('tr').dataset.p; ui.collapsed.has(pid)?ui.collapsed.delete(pid):ui.collapsed.add(pid); render(); return; }
+  const add=t.closest('.add'); if(add){ addRow(add.closest('tr').dataset.p,''); return; }
+  const pick=t.closest('.pick'); if(pick){ if(!S.readOnly) openPersonSearch(pick); return; }
+  const more=t.closest('.more'); if(more){ openRowMenu(more); return; }
+  const td=t.closest('td.c'); if(td && !td.querySelector('input')){ ui.focus={rid:td.parentNode.dataset.r,i:+td.dataset.i}; startEdit(td,null); }
+});
+grid.addEventListener('keydown',e=>{
+  const td=e.target.closest && e.target.closest('td.c'); if(!td || e.target.tagName==='INPUT') return;
+  const k=e.key;
+  if(k==='ArrowRight'){ e.preventDefault(); moveFocus(td,'right'); }
+  else if(k==='ArrowLeft'){ e.preventDefault(); moveFocus(td,'left'); }
+  else if(k==='ArrowUp'){ e.preventDefault(); moveFocus(td,'up'); }
+  else if(k==='ArrowDown'){ e.preventDefault(); moveFocus(td,'down'); }
+  else if(k==='Enter'||k==='F2'){ e.preventDefault(); startEdit(td,null); }
+  else if(k==='Delete'||k==='Backspace'){ e.preventDefault(); if(!S.readOnly) setFte(td.parentNode.dataset.r,[[+td.dataset.i,0]]); }
+  else if(/^[0-9.,]$/.test(k) && !e.ctrlKey && !e.metaKey){ e.preventDefault(); startEdit(td,k==','?'.':k); }
+});
+grid.addEventListener('focusin',e=>{ const td=e.target.closest && e.target.closest('td.c'); if(td && e.target===td) ui.focus={rid:td.parentNode.dataset.r,i:+td.dataset.i}; });
+grid.addEventListener('paste',e=>{
+  const td=e.target.closest && e.target.closest('td.c'); if(!td||e.target.tagName==='INPUT'||S.readOnly) return;
+  const text=(e.clipboardData||window.clipboardData).getData('text'); if(!text) return; e.preventDefault();
+  const lines=text.replace(/\r/g,'').replace(/\n$/,'').split('\n').map(l=>l.split('\t'));
+  const V=vis(); const p0=V.indexOf(+td.dataset.i); let tr=td.parentNode; let bad=0;
+  for(const cols of lines){ while(tr && !tr.dataset.r) tr=tr.nextElementSibling; if(!tr) break;
+    const pairs=[]; cols.forEach((c,j)=>{ const i=V[p0+j]; if(i==null) return; const s=c.trim(); const v=s===''?0:parseFloat(s.replace(',','.')); if(!isFinite(v)||v<0||v>10){bad++;return;} pairs.push([i,v]); });
+    if(pairs.length) setFte(tr.dataset.r,pairs); tr=tr.nextElementSibling; }
+  if(bad) toast(bad+' pasted value'+(bad>1?'s were':' was')+' skipped. FTE must be a number from 0 to 10.');
+});
+function moveFocus(td,dir){
+  let n=null; const i=+td.dataset.i;
+  if(dir==='right') n=td.nextElementSibling; else if(dir==='left'){ n=td.previousElementSibling; if(n&&!n.classList.contains('c')) n=null; }
+  else { let tr=td.parentNode; do{ tr= dir==='down'?tr.nextElementSibling:tr.previousElementSibling; }while(tr && !tr.dataset.r); if(tr) n=tr.querySelector(`td[data-i="${i}"]`); }
+  if(n && n.classList.contains('c')){ n.focus(); ui.focus={rid:n.parentNode.dataset.r,i:+n.dataset.i}; } else td.focus();
+}
+function startEdit(td,ch){
+  if(S.readOnly) return; if(td.querySelector('input')) return;
+  const rid=td.parentNode.dataset.r, i=+td.dataset.i; const r=S.resources.get(rid); if(!r) return;
+  const v=+((r.fte||[])[i])||0;
+  const inp=document.createElement('input'); inp.className='ed'; inp.inputMode='decimal'; inp.setAttribute('aria-label','FTE for '+wkLabel(i));
+  inp.value= ch!=null? ch : (v?String(v):''); td.textContent=''; td.appendChild(inp); inp.focus(); if(ch==null) inp.select();
+  let done=false;
+  const finish=(commit,move)=>{
+    if(done) return; done=true;
+    let nv=v;
+    if(commit){ const raw=inp.value.trim(); nv= raw===''?0:parseFloat(raw.replace(',','.')); if(!isFinite(nv)||nv<0||nv>10){ nv=v; toast('Enter an FTE from 0 to 10, for example 0.5.'); } }
+    td.textContent=fmt(nv);
+    if(move) moveFocus(td,move); else td.focus();
+    if(commit && nv!==v) setFte(rid,[[i,nv]]); else if(pendingRender) schedule();
+  };
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){ e.preventDefault(); finish(true,e.shiftKey?'up':'down'); }
+    else if(e.key==='Tab'){ e.preventDefault(); finish(true,e.shiftKey?'left':'right'); }
+    else if(e.key==='Escape'){ e.preventDefault(); finish(false); }
+  });
+  inp.addEventListener('blur',()=>finish(true));
+}
+function openPicker(btn){
+  const tr=btn.closest('tr'); const rid=tr.dataset.r; const r=S.resources.get(rid); if(!r) return;
+  const k=btn.dataset.k; const sel=document.createElement('select'); sel.className='picksel';
+  if(k==='role'){
+    sel.setAttribute('aria-label','Role');
+    let h='<option value="">Choose role</option>'+S.lists.roles.map(x=>`<option${x===r.role?' selected':''}>${esc(x)}</option>`).join('');
+    if(r.role && !S.lists.roles.includes(r.role)) h+=`<option selected>${esc(r.role)}</option>`;
+    sel.innerHTML=h;
+  } else {
+    sel.setAttribute('aria-label','Person');
+    const groups=new Map(); for(const p of peopleSorted()){ const g=p.region||'No location'; if(!groups.has(g)) groups.set(g,[]); groups.get(g).push(p); }
+    let h='<option value="">Unassigned</option>';
+    for(const [g,ps] of groups) h+=`<optgroup label="${esc(g)}">`+ps.map(p=>`<option value="${esc(p.id)}"${p.id===r.personId?' selected':''}>${esc(p.name)}</option>`).join('')+'</optgroup>';
+    h+='<option value="__new">Add a new person…</option>';
+    sel.innerHTML=h;
+  }
+  btn.replaceWith(sel); sel.focus(); try{ sel.showPicker&&sel.showPicker(); }catch(e){}
+  let done=false;
+  const finish=()=>{ if(done) return; done=true; const val=sel.value; const cur=S.resources.get(rid);
+    if(k==='person' && val==='__new'){ personDialog(null,id=>{ const c=S.resources.get(rid); if(c) saveDoc('resources',{...c,personId:id}); }); sel.blur(); schedule(); return; }
+    if(cur){ if(k==='role' && val!==(cur.role||'')) saveDoc('resources',{...cur,role:val}); if(k==='person' && val!==(cur.personId||'')) saveDoc('resources',{...cur,personId:val||null}); }
+    sel.blur(); pendingRender=false; schedule(); };
+  sel.addEventListener('change',finish);
+  sel.addEventListener('blur',()=>{ if(!done){ done=true; schedule(); } });
+  sel.addEventListener('keydown',e=>{ if(e.key==='Escape'){ done=true; sel.blur(); schedule(); } });
+}
+
+/* ---------- person search (type to find) ---------- */
+const plist=$('#plist'); let psCancel=null, psPlace=null;
+function hl(name,q){ if(!q) return esc(name); const i=name.toLowerCase().indexOf(q); if(i<0) return esc(name); return esc(name.slice(0,i))+'<b>'+esc(name.slice(i,i+q.length))+'</b>'+esc(name.slice(i+q.length)); }
+function openPersonSearch(btn){
+  const tr=btn.closest('tr'); const rid=tr.dataset.r; const r=S.resources.get(rid); if(!r) return;
+  const cur=r.personId?S.people.get(r.personId):null;
+  const inp=document.createElement('input'); inp.type='text'; inp.className='ed psearch'; inp.value=cur?cur.name:''; inp.placeholder='Type a name';
+  inp.setAttribute('role','combobox'); inp.setAttribute('aria-autocomplete','list'); inp.setAttribute('aria-controls','plist'); inp.setAttribute('aria-expanded','true'); inp.setAttribute('aria-label','Search for a person'); inp.autocomplete='off';
+  btn.replaceWith(inp); inp.focus({preventScroll:true}); inp.select();
+  let items=[], act=0, done=false, typed=false;
+  function build(){
+    const q=typed? inp.value.trim().toLowerCase() : '';
+    let ps=peopleSorted().filter(p=>!q || p.name.toLowerCase().includes(q));
+    if(q) ps.sort((a,b)=>(a.name.toLowerCase().startsWith(q)?0:1)-(b.name.toLowerCase().startsWith(q)?0:1)||a.name.localeCompare(b.name));
+    items=ps.slice(0,60).map(p=>({k:'p',p}));
+    const raw=inp.value.trim();
+    if(typed && raw && !S.people.size || (typed && raw && ![...S.people.values()].some(p=>p.name.toLowerCase()===raw.toLowerCase()))) items.push({k:'new',name:raw});
+    if(cur) items.push({k:'clear'});
+    if(act>=items.length) act=Math.max(0,items.length-1);
+    if(cur && !typed){ const ci=items.findIndex(x=>x.k==='p'&&x.p.id===cur.id); if(ci>=0) act=ci; }
+    plist.innerHTML= items.length? items.map((x,i)=>{
+      const sel=i===act?' aria-selected="true"':' aria-selected="false"';
+      if(x.k==='p'){ const meta=[x.p.role,x.p.region].filter(Boolean).join(', '); return `<li role="option" id="po${i}" data-i="${i}"${sel}><span>${hl(x.p.name,q)}</span><small>${esc(meta)}</small></li>`; }
+      if(x.k==='new') return `<li role="option" id="po${i}" data-i="${i}" class="new"${sel}>Add “${esc(x.name)}” as a new person</li>`;
+      return `<li role="option" id="po${i}" data-i="${i}" class="clear"${sel}>Clear, leave this row unassigned</li>`;
+    }).join('') : '<li class="none">No one matches. Check the spelling.</li>';
+    inp.setAttribute('aria-activedescendant', items.length?'po'+act:'');
+    place();
+    const a=plist.querySelector('[aria-selected="true"]'); if(a) a.scrollIntoView({block:'nearest'});
+  }
+  function place(){
+    if(done) return;
+    const b=inp.getBoundingClientRect(), sc=$('#planScroll').getBoundingClientRect();
+    if(b.bottom<sc.top+60 || b.top>sc.bottom){ plist.hidden=true; return; }
+    plist.hidden=false;
+    const h=plist.offsetHeight; const w=Math.max(320,b.width);
+    plist.style.width=w+'px'; plist.style.left=Math.max(8,Math.min(b.left,innerWidth-w-8))+'px';
+    plist.style.top=(b.bottom+h+8>innerHeight && b.top-h-4>0 ? b.top-h-4 : b.bottom+2)+'px';
+  }
+  function close(){ plist.hidden=true; plist.innerHTML=''; plist.onmousedown=null; psCancel=null; psPlace=null; }
+  function finish(){ if(done) return; done=true; close(); if(document.activeElement===inp) inp.blur(); pendingRender=false; schedule(); }
+  function choose(x){
+    if(done||!x) return; const c=S.resources.get(rid);
+    if(x.k==='p'){ if(c && c.personId!==x.p.id) saveDoc('resources',{...c,personId:x.p.id}); }
+    else if(x.k==='clear'){ if(c && c.personId) saveDoc('resources',{...c,personId:null}); }
+    else if(x.k==='new'){ finish(); personDialog(x.name,id=>{ const cc=S.resources.get(rid); if(cc) saveDoc('resources',{...cc,personId:id}); }); return; }
+    finish();
+  }
+  psCancel=finish; psPlace=place;
+  inp.addEventListener('input',()=>{ typed=true; act=0; build(); });
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='ArrowDown'){ e.preventDefault(); if(items.length){ act=(act+1)%items.length; build(); } }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); if(items.length){ act=(act-1+items.length)%items.length; build(); } }
+    else if(e.key==='Enter'){ e.preventDefault(); choose(items[act]); }
+    else if(e.key==='Escape'){ e.preventDefault(); finish(); }
+    else if(e.key==='Tab'){ const raw=inp.value.trim().toLowerCase(); const ex=items.find(x=>x.k==='p'&&x.p.name.toLowerCase()===raw); if(typed&&ex) choose(ex); else finish(); }
+  });
+  plist.onmousedown=e=>{ e.preventDefault(); const li=e.target.closest('li[data-i]'); if(li) choose(items[+li.dataset.i]); };
+  inp.addEventListener('blur',()=>setTimeout(finish,0));
+  build();
+}
+$('#planScroll').addEventListener('scroll',()=>{ if(psPlace) psPlace(); },{passive:true});
+window.addEventListener('resize',()=>{ if(psPlace) psPlace(); });
+
+function addRow(pid,role,afterId){
+  if(S.readOnly) return;
+  const rows=rowsOf(pid); let order;
+  if(afterId){ const idx=rows.findIndex(r=>r.id===afterId); const a=rows[idx]; const b=rows[idx+1]; order= b? ((a.order||0)+(b.order||0))/2 : (a.order||0)+1; }
+  else order= rows.length? (rows[rows.length-1].order||0)+1 : Date.now()/1e9;
+  const id=newId('resources');
+  ui.collapsed.delete(pid);
+  saveDoc('resources',{id,project:pid,role:role||'',personId:null,order,fte:zeros()});
+  schedule();
+  setTimeout(()=>{ const b=document.querySelector(`tr[data-r="${CSS.escape(id)}"] .pick[data-k="person"]`); if(b){ b.scrollIntoView({block:'nearest'}); b.focus(); } },120);
+}
+
+/* ---------- row menu ---------- */
+const menu=$('#menu');
+function closeMenu(){ menu.hidden=true; menu.innerHTML=''; }
+document.addEventListener('click',e=>{ if(!menu.hidden && !menu.contains(e.target) && !e.target.closest('.more')) closeMenu(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !menu.hidden) closeMenu(); });
+function openRowMenu(btn){
+  const rid=btn.closest('tr').dataset.r; const r=S.resources.get(rid); if(!r) return;
+  menu.innerHTML=`<button data-a="dup">Add another row${effRole(r)?' for '+esc(effRole(r)):''}</button><button data-a="fill">Fill weeks…</button><button data-a="clear">Clear all weeks</button><button data-a="del" class="danger">Delete row</button>`;
+  menu.hidden=false; const b=btn.getBoundingClientRect(); const mw=menu.offsetWidth, mh=menu.offsetHeight;
+  menu.style.left=Math.max(8,Math.min(b.left,innerWidth-mw-8))+'px'; menu.style.top=(b.bottom+mh+8>innerHeight? b.top-mh-4 : b.bottom+4)+'px';
+  menu.querySelector('button').focus();
+  menu.onclick=e=>{ const a=e.target.dataset.a; if(!a) return; closeMenu();
+    if(a==='dup') addRow(r.project,effRole(r),r.id);
+    else if(a==='fill') fillDialog(rid);
+    else if(a==='clear'){ const f=zeros(); setFte(rid,f.map((v,i)=>[i,0])); toast('Weeks cleared for this row.'); }
+    else if(a==='del'){ const pn=r.personId&&S.people.get(r.personId); confirmDialog('Delete this row?',`${pn?pn.name:'Unassigned'}${effRole(r)?', '+effRole(r):''} on ${(S.projects.get(r.project)||{}).name||'this project'}. Its weekly FTE is removed too.`,'Delete row',()=>{ delDoc('resources',rid); schedule(); }); }
+  };
+}
+
+/* ---------- dialogs ---------- */
+const dlg=$('#dlg'), dform=$('#dlgForm');
+function openDlg(html,onOk){
+  dform.innerHTML=html; dform.onsubmit=e=>{ const sub=e.submitter; if(sub && sub.value==='cancel') return; if(onOk(new FormData(dform))===false){ e.preventDefault(); } };
+  dlg.showModal(); const f=dform.querySelector('[data-af]')||dform.querySelector('input,select,textarea'); if(f){ f.focus(); if(f.select) f.select(); }
+}
+function confirmDialog(title,text,okLabel,fn){ openDlg(`<h2>${esc(title)}</h2><p>${esc(text)}</p><div class="acts"><button class="btn primary danger-ok" value="ok" style="background:var(--red);border-color:var(--red);color:#fff">${esc(okLabel)}</button><button class="btn" value="cancel" formnovalidate>Cancel</button></div>`,()=>{ fn(); }); }
+function weekOptions(sel){ let h=''; for(let i=0;i<nW();i++) h+=`<option value="${i}"${i===sel?' selected':''}>W${i+1}, ${esc(wkLabel(i))}</option>`; return h; }
+function fillDialog(rid){
+  const r=S.resources.get(rid); const p=S.projects.get(r.project)||{}; let a=0,b=nW()-1;
+  const wins=[]; for(let i=0;i<nW();i++) if(inWin(p,i)) wins.push(i); if(wins.length){ a=wins[0]; b=wins[wins.length-1]; }
+  const pn=r.personId&&S.people.get(r.personId);
+  openDlg(`<h2>Fill weeks</h2><p>${pn?esc(pn.name):'Unassigned'}${effRole(r)?', '+esc(effRole(r)):''} on ${esc(p.name||'')}. The range starts at the project dates.</p>
+    <div class="row2"><div><label for="fa">From week</label><select class="sel" id="fa" name="a">${weekOptions(a)}</select></div><div><label for="fb">To week</label><select class="sel" id="fb" name="b">${weekOptions(b)}</select></div></div>
+    <label for="fv">FTE per week</label><input class="inp" id="fv" name="v" inputmode="decimal" value="1" required data-af>
+    <div class="acts"><button class="btn primary" value="ok">Fill weeks</button><button class="btn" value="cancel" formnovalidate>Cancel</button></div>`,fd=>{
+      let x=+fd.get('a'), y=+fd.get('b'); if(y<x){ const t=x; x=y; y=t; }
+      const v=parseFloat(String(fd.get('v')).replace(',','.')); if(!isFinite(v)||v<0||v>10){ toast('Enter an FTE from 0 to 10, for example 0.5.'); return false; }
+      const pairs=[]; for(let i=x;i<=y;i++) pairs.push([i,v]); setFte(rid,pairs); toast(`Filled ${pairs.length} week${pairs.length>1?'s':''} with ${v} FTE.`);
+    });
+}
+function projectDialog(){
+  const cats=S.lists.categories;
+  openDlg(`<h2>Add project</h2><p>Leave a date blank if it is not set yet.</p>
+    <label for="pn">Project name</label><input class="inp" id="pn" name="name" required>
+    <label for="pb">Brand</label><select class="sel" id="pb" name="brand">${S.lists.brands.map(c=>`<option>${esc(c)}</option>`).join('')}</select>
+    <label for="pc">Category</label><select class="sel" id="pc" name="category">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}</select>
+    <div class="row2"><div><label for="ps">Start</label><input class="inp" type="date" id="ps" name="start"></div><div><label for="pe">End</label><input class="inp" type="date" id="pe" name="end"></div></div>
+    <label for="pst">Status</label><input class="inp" id="pst" name="status" value="Planned">
+    <label class="check" style="margin-top:14px;font-weight:500;color:var(--ink)"><input type="checkbox" name="roles" checked> Add one row for each role</label>
+    <div class="acts"><button class="btn primary" value="ok">Add project</button><button class="btn" value="cancel" formnovalidate>Cancel</button></div>`,fd=>{
+      const name=String(fd.get('name')).trim(); if(!name) return false;
+      const order=Math.max(0,...[...S.projects.values()].map(p=>p.order||0))+1; const id=newId('projects');
+      saveDoc('projects',{id,name,brand:fd.get('brand')||S.lists.brands[0]||'Lucky',category:fd.get('category')||'',start:fd.get('start')||null,end:fd.get('end')||null,status:String(fd.get('status')||'').trim(),detail:'',order});
+      if(fd.get('roles')) S.lists.roles.forEach((role,i)=>{ const rid=newId('resources'); saveDoc('resources',{id:rid,project:id,role,personId:null,order:i+1,fte:zeros()}); });
+      toast('Project added. Plan people against it on the Resource plan tab.'); schedule();
+    });
+}
+function personDialog(prefill,after){
+  openDlg(`<h2>Add person</h2><p>People you add here can be picked on any project.</p>
+    <label for="un">Name</label><input class="inp" id="un" name="name" value="${esc(prefill||'')}" required>
+    <label for="ur">Role</label><select class="sel" id="ur" name="role"><option value="">No role</option>${S.lists.roles.map(c=>`<option>${esc(c)}</option>`).join('')}</select>
+    <label for="ul">Location</label><select class="sel" id="ul" name="region"><option value="">No location</option>${S.lists.regions.map(c=>`<option>${esc(c)}</option>`).join('')}</select>
+    <div class="acts"><button class="btn primary" value="ok">Add person</button><button class="btn" value="cancel" formnovalidate>Cancel</button></div>`,fd=>{
+      const name=String(fd.get('name')).trim(); if(!name) return false;
+      if([...S.people.values()].some(p=>p.name.toLowerCase()===name.toLowerCase())){ toast(name+' is already on the team list.'); return false; }
+      const id=newId('people'); saveDoc('people',{id,name,role:fd.get('role')||'',region:fd.get('region')||''});
+      toast(name+' added to the team.'); if(after) after(id); schedule();
+    });
+}
+
+/* ---------- projects tab ---------- */
+$('#addProject').addEventListener('click',()=>{ if(!S.readOnly) projectDialog(); });
+function renderProjects(){
+  const ps=sortedProjects(); const ro=S.readOnly?' disabled':'';
+  $('#projCount').textContent=ps.length+' project'+(ps.length===1?'':'s');
+  const cats=S.lists.categories;
+  let h='<thead><tr><th>#</th><th style="min-width:120px">Brand</th><th style="min-width:160px">Category</th><th style="min-width:300px">Project</th><th>Start</th><th>End</th><th style="min-width:190px">Status</th><th style="min-width:320px">Detail</th><th>People</th><th></th></tr></thead><tbody>';
+  ps.forEach((p,n)=>{
+    const rows=rowsOf(p.id); const named=rows.filter(r=>r.personId).length;
+    const e=parseD(p.end), s=parseD(p.start); let flag='';
+    if(e!=null&&s!=null&&e<s) flag='End is before start'; else if(e!=null&&e<weekStart(0)) flag='Ends before the plan calendar';
+    const bl=S.lists.brands, pb=pBrand(p);
+    const brandOpts=(bl.includes(pb)?bl:[pb,...bl]).map(c=>`<option${c===pb?' selected':''}>${esc(c)}</option>`).join('');
+    const catOpts=(p.category&&!cats.includes(p.category)?[p.category,...cats]:cats).map(c=>`<option${c===p.category?' selected':''}>${esc(c)}</option>`).join('');
+    h+=`<tr data-id="${esc(p.id)}"><td class="num">${n+1}</td>
+      <td><select class="ed" data-f="brand" aria-label="Brand"${ro}>${brandOpts}</select></td>
+      <td><select class="ed" data-f="category" aria-label="Category"${ro}>${p.category?'':'<option value="" selected>Choose</option>'}${catOpts}</select></td>
+      <td><input class="ed" data-f="name" value="${esc(p.name)}" aria-label="Project name"${ro}></td>
+      <td><input class="ed" type="date" data-f="start" value="${esc(p.start||'')}" aria-label="Start date, blank for N/A"${ro}></td>
+      <td><input class="ed" type="date" data-f="end" value="${esc(p.end||'')}" aria-label="End date"${ro}>${flag?`<span class="flag">${esc(flag)}</span>`:''}</td>
+      <td><textarea class="ed" data-f="status" rows="1" aria-label="Status"${ro}>${esc(p.status||'')}</textarea></td>
+      <td><textarea class="ed" data-f="detail" rows="2" aria-label="Detail"${ro}>${esc(p.detail||'')}</textarea></td>
+      <td class="num">${named} of ${rows.length}</td>
+      <td>${S.readOnly?'':'<button class="x del" aria-label="Delete project" title="Delete project">✕</button>'}</td></tr>`;
+  });
+  if(!ps.length) h+='<tr><td colspan="10" style="padding:24px;color:var(--muted)">No projects yet. Use Add project to create the first one.</td></tr>';
+  $('#projTable').innerHTML=h+'</tbody>';
+  renderListBox($('#brandBox'),'brands','Brands','Each project belongs to one brand. The Resource plan groups projects by brand.');
+  renderListBox($('#catBox'),'categories','Categories','Used to group projects on the plan and in the filters.');
+}
+$('#projTable').addEventListener('change',e=>{
+  const el=e.target; const f=el.dataset.f; if(!f) return; const id=el.closest('tr').dataset.id; const p=S.projects.get(id); if(!p) return;
+  let v=el.value; if(f==='name'){ v=v.trim(); if(!v){ el.value=p.name; toast('A project needs a name.'); return; } }
+  if(f==='start'||f==='end') v=v||null; else v=String(v).trim();
+  if(v!==p[f]) saveDoc('projects',{...p,[f]:v});
+});
+$('#projTable').addEventListener('click',e=>{
+  const b=e.target.closest('.del'); if(!b) return; const id=b.closest('tr').dataset.id; const p=S.projects.get(id); if(!p) return;
+  const rows=rowsOf(id);
+  confirmDialog('Delete '+p.name+'?', rows.length? `Its ${rows.length} resource row${rows.length>1?'s':''} and their weekly FTE are deleted too.` : 'It has no resource rows.','Delete project',()=>{ rows.forEach(r=>delDoc('resources',r.id)); delDoc('projects',id); schedule(); });
+});
+
+/* ---------- lists editor ---------- */
+const SING={brands:'brand',categories:'category',regions:'location',roles:'role'};
+const LISTUSE={
+  brands:v=>[...S.projects.values()].filter(p=>pBrand(p)===v).length,
+  categories:v=>[...S.projects.values()].filter(p=>p.category===v).length,
+  regions:v=>[...S.people.values()].filter(p=>p.region===v).length,
+  roles:v=>[...S.people.values()].filter(p=>p.role===v).length+[...S.resources.values()].filter(r=>r.role===v).length,
+};
+function renderListBox(box,key,title,desc){
+  const items=S.lists[key]; const ro=S.readOnly?' disabled':'';
+  box.innerHTML=`<h3>${esc(title)}</h3><p>${esc(desc)}</p>`+items.map((v,i)=>`<div class="list-row"><input class="inp ed" data-key="${key}" data-i="${i}" value="${esc(v)}" aria-label="${esc(title)} ${i+1}"${ro}>${S.readOnly?'':`<button class="x" data-key="${key}" data-rm="${i}" aria-label="Remove ${esc(v)}">✕</button>`}</div>`).join('')+
+    (S.readOnly?'':`<div class="list-row"><input class="inp" data-new="${key}" placeholder="Add ${esc(SING[key])}" aria-label="New ${esc(title)}"><button class="btn small" data-add="${key}">Add</button></div>`);
+}
+function renameInList(key,oldV,newV){
+  S.lists[key]=S.lists[key].map(x=>x===oldV?newV:x); saveLists();
+  if(key==='brands') S.projects.forEach(p=>{ if(pBrand(p)===oldV) saveDoc('projects',{...p,brand:newV}); });
+  if(key==='categories') S.projects.forEach(p=>{ if(p.category===oldV) saveDoc('projects',{...p,category:newV}); });
+  if(key==='regions') S.people.forEach(p=>{ if(p.region===oldV) saveDoc('people',{...p,region:newV}); });
+  if(key==='roles'){ S.people.forEach(p=>{ if(p.role===oldV) saveDoc('people',{...p,role:newV}); }); S.resources.forEach(r=>{ if(r.role===oldV) saveDoc('resources',{...r,role:newV}); }); }
+}
+document.addEventListener('change',e=>{
+  const el=e.target; if(!el.dataset || el.dataset.key==null || el.dataset.i==null || !el.classList.contains('ed')) return;
+  const key=el.dataset.key, i=+el.dataset.i, oldV=S.lists[key][i], v=el.value.trim();
+  if(!v){ el.value=oldV; toast('A name cannot be blank. Use ✕ to remove it instead.'); return; }
+  if(v===oldV) return; if(S.lists[key].includes(v)){ el.value=oldV; toast(v+' is already in the list.'); return; }
+  renameInList(key,oldV,v); toast(`Renamed ${oldV} to ${v} everywhere it is used.`); schedule();
+});
+document.addEventListener('click',e=>{
+  const rm=e.target.closest('[data-rm]'); if(rm){ const key=rm.dataset.key, v=S.lists[key][+rm.dataset.rm]; const n=LISTUSE[key](v);
+    if(n){ toast(`${v} is still used ${n} time${n>1?'s':''}. Change those entries first, then remove it.`); return; }
+    S.lists[key]=S.lists[key].filter(x=>x!==v); saveLists(); schedule(); return; }
+  const ad=e.target.closest('[data-add]'); if(ad){ addToList(ad.dataset.add); }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Enter' && e.target.dataset && e.target.dataset.new){ e.preventDefault(); addToList(e.target.dataset.new); } });
+function addToList(key){ const inp=document.querySelector(`[data-new="${key}"]`); const v=inp.value.trim(); if(!v) return; if(S.lists[key].includes(v)){ toast(v+' is already in the list.'); return; } S.lists[key]=[...S.lists[key],v]; saveLists(); inp.value=''; schedule(); }
+
+/* ---------- team tab ---------- */
+$('#addPerson').addEventListener('click',()=>{ if(!S.readOnly) personDialog(null); });
+function inBrand(r,b){ if(!b) return true; const p=S.projects.get(r.project); return !!p && pBrand(p)===b; }
+function personLoad(brand){ const m=new Map(); S.resources.forEach(r=>{ if(!r.personId || !inBrand(r,brand)) return; let a=m.get(r.personId); if(!a){ a={rows:0,w:zeros()}; m.set(r.personId,a); } a.rows++; (r.fte||[]).forEach((v,i)=>{ if(i<a.w.length) a.w[i]+=(+v||0); }); }); return m; }
+function renderTeam(){
+  const load=personLoad(); const ro=S.readOnly?' disabled':'';
+  const match=(v,f)=> !f || (f==='__none'? !v : v===f);
+  const ps=peopleSorted().filter(p=>(!ui.tq || p.name.toLowerCase().includes(ui.tq)) && match(p.role,ui.tRole) && match(p.region,ui.tReg));
+  const val=(p,k)=>{ const l=load.get(p.id); if(k==='rows') return l?l.rows:0; if(k==='peak') return l?Math.max(...l.w):0; return p[k]||''; };
+  const {k:sk,d:sd}=ui.tSort;
+  ps.sort((a,b)=>{ const x=val(a,sk), y=val(b,sk); let c;
+    if(typeof x==='number') c=(x-y)*sd; else if(!x!==!y) c= x?-1:1; else c=String(x).localeCompare(String(y))*sd;
+    return c || a.name.localeCompare(b.name); });
+  const filtered=ui.tq||ui.tRole||ui.tReg;
+  $('#teamCount').textContent= filtered? `${ps.length} of ${S.people.size} people` : S.people.size+' people';
+  const th=(k,label,w,num)=>{ const on=sk===k; const dir=on?(sd>0?'ascending':'descending'):'none';
+    return `<th aria-sort="${dir}"${w?` style="min-width:${w}px"`:''}${num?' class="num"':''}><button class="sort${on?' on':''}" data-sort="${k}">${label}<span aria-hidden="true">${on?(sd>0?' ▲':' ▼'):' ↕'}</span></button></th>`; };
+  let h='<thead><tr>'+th('name','Name',200)+th('role','Role',190)+th('region','Location',150)+th('rows','Project rows',0,1)+th('peak','Peak weekly FTE',0,1)+'<th></th></tr></thead><tbody>';
+  for(const p of ps){ const l=load.get(p.id); const peak=l?Math.max(...l.w):0;
+    const roleOpts=['',...S.lists.roles].concat(p.role&&!S.lists.roles.includes(p.role)?[p.role]:[]).map(x=>`<option value="${esc(x)}"${x===(p.role||'')?' selected':''}>${esc(x||'No role')}</option>`).join('');
+    const regOpts=['',...S.lists.regions].concat(p.region&&!S.lists.regions.includes(p.region)?[p.region]:[]).map(x=>`<option value="${esc(x)}"${x===(p.region||'')?' selected':''}>${esc(x||'No location')}</option>`).join('');
+    h+=`<tr data-id="${esc(p.id)}"><td><input class="ed" data-f="name" value="${esc(p.name)}" aria-label="Name"${ro}></td>
+      <td><select class="ed" data-f="role" aria-label="Role"${ro}>${roleOpts}</select></td>
+      <td><select class="ed" data-f="region" aria-label="Location"${ro}>${regOpts}</select></td>
+      <td class="num">${l?l.rows:0}</td><td class="num peak${peak>1?' over':''}">${peak?fmt1(peak):''}</td>
+      <td>${S.readOnly?'':'<button class="x del" aria-label="Remove '+esc(p.name)+'" title="Remove person">✕</button>'}</td></tr>`; }
+  if(!ps.length) h+=`<tr><td colspan="6" style="padding:24px;color:var(--muted)">${S.people.size?'No people match these filters.':'No people yet. Use Add person to build the team list.'}</td></tr>`;
+  $('#teamTable').innerHTML=h+'</tbody>';
+  renderListBox($('#regBox'),'regions','Locations','Where each person is based. Used for filters and the Allocation view.');
+  renderListBox($('#roleBox'),'roles','Roles','Roles you can pick for people and for each project row.');
+}
+$('#teamTable').addEventListener('change',e=>{
+  const el=e.target; const f=el.dataset.f; if(!f) return; const id=el.closest('tr').dataset.id; const p=S.people.get(id); if(!p) return;
+  let v=el.value.trim();
+  if(f==='name'){ if(!v){ el.value=p.name; toast('A person needs a name.'); return; } if([...S.people.values()].some(x=>x.id!==id && x.name.toLowerCase()===v.toLowerCase())){ el.value=p.name; toast(v+' is already on the team list.'); return; } }
+  if(v!==(p[f]||'')) saveDoc('people',{...p,[f]:v});
+});
+$('#teamTable').addEventListener('click',e=>{
+  const sb=e.target.closest('.sort'); if(sb){ const k=sb.dataset.sort; ui.tSort= ui.tSort.k===k? {k,d:-ui.tSort.d} : {k,d:(k==='rows'||k==='peak')?-1:1}; render(); const nb=document.querySelector(`#teamTable .sort[data-sort="${k}"]`); if(nb) nb.focus(); return; }
+  const b=e.target.closest('.del'); if(!b) return; const id=b.closest('tr').dataset.id; const p=S.people.get(id); if(!p) return;
+  const rows=[...S.resources.values()].filter(r=>r.personId===id);
+  confirmDialog('Remove '+p.name+'?', rows.length? `${p.name} is on ${rows.length} project row${rows.length>1?'s':''}. Those rows stay, marked Unassigned, with their weekly FTE kept.` : `${p.name} is not on any project rows.`,'Remove person',()=>{ rows.forEach(r=>saveDoc('resources',{...r,personId:null})); delDoc('people',id); schedule(); });
+});
+
+/* ---------- allocation ---------- */
+function renderAlloc(){
+  const W=nW(); const V=vis(); const {m,d,starts}=weekHeader(V); const load=personLoad(ui.aBrand); const g=$('#allocGrid'), st=$('#allocState');
+  const byWeekProj=new Map(); // personId -> week -> [proj, v]
+  S.resources.forEach(r=>{ if(!r.personId || !inBrand(r,ui.aBrand)) return; (r.fte||[]).forEach((v,i)=>{ v=+v||0; if(!v) return; const k=r.personId+'|'+i; if(!byWeekProj.has(k)) byWeekProj.set(k,[]); byWeekProj.get(k).push(((S.projects.get(r.project)||{}).name||'?')+': '+fmt(v)); }); });
+  let ps=peopleSorted().filter(p=>(!ui.aReg||p.region===ui.aReg));
+  if(ui.aOnly) ps=ps.filter(p=>{ const l=load.get(p.id); return l && V.some(i=>l.w[i]>0); });
+  const un=zeros(); S.resources.forEach(r=>{ if((r.personId && S.people.has(r.personId)) || !inBrand(r,ui.aBrand)) return; (r.fte||[]).forEach((v,i)=>{ if(i<W) un[i]+=(+v||0); }); });
+  if(!ps.length && !V.some(i=>un[i])){ g.hidden=true; st.hidden=false; st.innerHTML= ui.aOnly? (ui.aBrand? `<h2>No FTE planned for ${esc(ui.aBrand)}</h2><p>No one has weekly FTE on ${esc(ui.aBrand)} projects in the weeks shown. Choose another brand or year, or enter FTE on the Resource plan tab.</p>` : '<h2>No FTE planned yet</h2><p>Enter weekly FTE on the Resource plan tab and each person’s total load appears here, with weeks over 1.0 FTE in red.</p>') : '<h2>No people match</h2><p>Choose another location or add people on the Team tab.</p>'; return; }
+  st.hidden=true; g.hidden=false;
+  let body='';
+  for(const p of ps){ const l=load.get(p.id); const w=l?l.w:zeros(); const peak=Math.max(0,...V.map(i=>w[i]));
+    let cells=''; for(const i of V){ const v=w[i]; const cls='w a '+(v>1.0001?'over':heat(v))+(starts.has(i)?' mstart':''); const t=v?(byWeekProj.get(p.id+'|'+i)||[]).join('\n'):''; cells+=`<td class="${cls}"${t?` title="${esc(wkLabel(i)+'\n'+t)}"`:''}>${fmt(v)}</td>`; }
+    body+=`<tr><td class="sl c0 pname" title="${esc(p.name)}">${esc(p.name)}</td><td class="sl c1" style="padding:0 8px;color:var(--muted)">${esc(p.role||'')}</td><td class="sl c2">${esc(p.region||'')}</td><td class="sl c3${peak>1?'" style="color:var(--red)':''}">${fmt1(peak)}</td>${cells}</tr>`; }
+  if(V.some(i=>un[i])) body+=`<tr><td class="sl c0 pname" style="font-style:italic;font-weight:500">Unassigned rows</td><td class="sl c1"></td><td class="sl c2"></td><td class="sl c3">${fmt1(Math.max(...V.map(i=>un[i])))}</td>${V.map(i=>`<td class="w a${starts.has(i)?' mstart':''}" style="color:var(--muted)">${fmt(un[i])}</td>`).join('')}</tr>`;
+  g.innerHTML=`<thead><tr class="m"><th class="sl" style="left:0" colspan="4"></th>${m}</tr><tr class="d"><th class="sl c0">Person</th><th class="sl c1">Role</th><th class="sl c2">Location</th><th class="sl c3">Peak</th>${d}</tr></thead><tbody>${body}</tbody>`;
+}
+
+/* ---------- export ---------- */
+$('#exportBtn').addEventListener('click',async()=>{
+  if(!window.XLSX){ toast('The Excel exporter is still loading. Try again in a moment.'); return; }
+  const W=nW(); const wl=[]; for(let i=0;i<W;i++) wl.push(wkLabel(i));
+  const wb=XLSX.utils.book_new(); const ps=sortedProjects();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['#','Brand','Category','Project','Start','End','Status','Detail'],...ps.map((p,n)=>[n+1,pBrand(p),p.category,p.name,p.start||'N/A',p.end||'N/A',p.status,p.detail])]),'Projects');
+  const plan=[['#','Brand','Category','Project','Person','Role','Location','Total FTE-wks',...wl]];
+  ps.forEach((p,n)=>rowsOf(p.id).forEach(r=>{ const pe=r.personId&&S.people.get(r.personId); const f=[]; for(let i=0;i<W;i++) f.push(+((r.fte||[])[i])||0); plan.push([n+1,pBrand(p),p.category,p.name,pe?pe.name:'',effRole(r),pe?pe.region:'',f.reduce((a,b)=>a+b,0),...f]); }));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(plan),'Resource Plan');
+  const load=personLoad();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Name','Role','Location','Peak weekly FTE',...wl],...peopleSorted().map(p=>{ const w=(load.get(p.id)||{w:zeros()}).w; return [p.name,p.role,p.region,Math.max(0,...w),...w]; })]),'Team');
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  const d=new Date(); const stamp=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  try{ await S.dl.save({filename:`Lucky_Resource_Plan_${stamp}.xlsx`,data:buf}); toast('Excel file saved.'); }
+  catch(e){ if(e&&e.code==='declined') return; toast('The Excel file could not be saved here.'); }
+});
+
+/* ---------- boot ---------- */
+render();
+let subs=[];
+function subErr(e){ const c=e&&e.code;
+  if(c==='revoked'){ banner('This page no longer has access to the plan. Reopen it from its link.'); return; }
+  if(c==='unavailable'){ setTimeout(subscribe,2000); return; }
+  banner('The plan could not be loaded. Reload the page to try again.'); }
+function subscribe(){
+  subs.forEach(u=>{ try{u();}catch(e){} }); subs=[];
+  subs.push(S.db.doc('config/lists').onSnapshot(s=>{ if(s.exists){ const d=s.data(); S.lists={...S.lists,regions:[...(d.regions||[])],roles:[...(d.roles||[])],categories:[...(d.categories||[])],brands:(d.brands&&d.brands.length)?[...d.brands]:['Lucky','EEZE','PT','Choice'],weekStart:d.weekStart||S.lists.weekStart,weeks:d.weeks||S.lists.weeks}; } S.loaded.l=true; schedule(); },subErr));
+  const col=(name,key,flag)=>subs.push(S.db.collection(name).onSnapshot(snap=>{ const mp=new Map(); for(const d of snap.docs){ const v={id:d.id,...d.data()}; if(key==='resources'&&pendingFte.has(d.id)) v.fte=pendingFte.get(d.id).slice(); mp.set(d.id,v); } S[key]=mp; S.loaded[flag]=true; schedule(); },subErr));
+  col('projects','projects','p'); col('people','people','u'); col('resources','resources','r');
+}
+(async()=>{
+  let db=null;
+  try{ db= window.claude && window.claude.use ? await window.claude.use('db') : null; }catch(e){ db=null; }
+  if(!db){ S.noDb=true; setSave(); const st=$('#planState'); st.innerHTML='<h2>Open the plan from its Claude link</h2><p>The plan is saved in shared storage, which this copy of the page cannot reach. Open it from its claude.ai link to load and edit it.</p>'; return; }
+  S.db=db; subscribe(); setSave();
+  try{ S.dl= await window.claude.use('downloads'); }catch(e){ S.dl=null; }
+  $('#exportBtn').hidden=!S.dl;
+})();
+})();
+</script>
+</body>
+</html>
