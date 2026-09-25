@@ -1,0 +1,293 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  CI/CD for the Live Team Resource Plan. An AWS CodePipeline watches the GitHub
+  repository and, on every push to the branch, runs AWS CodeBuild to deploy the
+  app stack (template.yaml), upload the page and load the data the first time.
+
+Parameters:
+  RepositoryId:
+    Type: String
+    AllowedPattern: '^[^/\s]+/[^/\s]+$'
+    Description: GitHub repository as owner/name, e.g. my-company/lucky-resource-plan
+  BranchName:
+    Type: String
+    Default: main
+    Description: Branch that triggers a deployment
+  AppStackName:
+    Type: String
+    Default: lucky-resource-plan
+    AllowedPattern: '^[a-z][a-z0-9-]{2,40}$'
+    Description: Name of the app stack to deploy (lower case). Use the existing name to take over a stack you already deployed.
+  Passcode:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: Team passcode for the page (8 or more characters). Stored in AWS Secrets Manager.
+  RequireApproval:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: Choose true to require a manual approval in CodePipeline before each deployment
+  ExistingConnectionArn:
+    Type: String
+    Default: ''
+    Description: Optional. ARN of an existing, already-approved GitHub connection to reuse. Leave blank to create a new one.
+
+Conditions:
+  NeedApproval: !Equals [!Ref RequireApproval, 'true']
+  MakeConnection: !Equals [!Ref ExistingConnectionArn, '']
+
+Resources:
+  GitHubConnection:
+    Type: AWS::CodeStarConnections::Connection
+    Condition: MakeConnection
+    Properties:
+      ConnectionName: !Sub '${AppStackName}-github'
+      ProviderType: GitHub
+
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-old-artifacts
+            Status: Enabled
+            ExpirationInDays: 30
+
+  PasscodeSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${AppStackName}/plan-passcode'
+      Description: Team passcode for the Live Team Resource Plan page
+      SecretString: !Ref Passcode
+
+  # ---------- CodeBuild: does the actual deployment ----------
+  DeployPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Lets the build deploy the Live Team Resource Plan app stack and nothing else
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: CloudFormationStacks
+            Effect: Allow
+            Action: 'cloudformation:*'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${AppStackName}/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/aws-sam-cli-managed-default/*'
+          - Sid: CloudFormationGeneral
+            Effect: Allow
+            Action:
+              - cloudformation:CreateChangeSet
+              - cloudformation:DescribeStacks
+              - cloudformation:GetTemplateSummary
+              - cloudformation:ListStacks
+              - cloudformation:ValidateTemplate
+            Resource: '*'
+          - Sid: SamArtifactsAndSiteBuckets
+            Effect: Allow
+            Action: 's3:*'
+            Resource:
+              - 'arn:aws:s3:::aws-sam-cli-managed-default-*'
+              - 'arn:aws:s3:::aws-sam-cli-managed-default-*/*'
+              - !Sub 'arn:aws:s3:::${AppStackName}-sitebucket-*'
+              - !Sub 'arn:aws:s3:::${AppStackName}-sitebucket-*/*'
+          - Sid: LambdaFunction
+            Effect: Allow
+            Action: 'lambda:*'
+            Resource: !Sub 'arn:aws:lambda:*:${AWS::AccountId}:function:${AppStackName}-*'
+          - Sid: DynamoDBTable
+            Effect: Allow
+            Action:
+              - dynamodb:CreateTable
+              - dynamodb:DescribeTable
+              - dynamodb:UpdateTable
+              - dynamodb:DescribeContinuousBackups
+              - dynamodb:UpdateContinuousBackups
+              - dynamodb:DescribeTimeToLive
+              - dynamodb:TagResource
+              - dynamodb:UntagResource
+              - dynamodb:ListTagsOfResource
+            Resource: !Sub 'arn:aws:dynamodb:*:${AWS::AccountId}:table/${AppStackName}-*'
+          - Sid: ApiGateway
+            Effect: Allow
+            Action: 'apigateway:*'
+            Resource: 'arn:aws:apigateway:*::/*'
+          - Sid: CloudFront
+            Effect: Allow
+            Action: 'cloudfront:*'
+            Resource: '*'
+          - Sid: FunctionRole
+            Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:GetRole
+              - iam:PassRole
+              - iam:TagRole
+              - iam:UntagRole
+              - iam:UpdateAssumeRolePolicy
+              - iam:DetachRolePolicy
+              - iam:PutRolePolicy
+              - iam:DeleteRolePolicy
+              - iam:GetRolePolicy
+              - iam:ListRolePolicies
+              - iam:ListAttachedRolePolicies
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AppStackName}-PlanFunctionRole-*'
+          - Sid: FunctionRoleManagedPolicyOnlyLambdaBasic
+            Effect: Allow
+            Action: iam:AttachRolePolicy
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AppStackName}-PlanFunctionRole-*'
+            Condition:
+              ArnEquals:
+                iam:PolicyARN: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'codebuild-deploy-${AppStackName}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: codebuild.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref DeployPolicy
+      Policies:
+        - PolicyName: build-basics
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents]
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${AppStackName}-deploy*'
+              - Effect: Allow
+                Action: [s3:GetObject, s3:GetObjectVersion, s3:PutObject, s3:GetBucketLocation]
+                Resource:
+                  - !GetAtt ArtifactBucket.Arn
+                  - !Sub '${ArtifactBucket.Arn}/*'
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref PasscodeSecret
+
+  DeployProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub '${AppStackName}-deploy'
+      Description: Deploys the Live Team Resource Plan
+      ServiceRole: !GetAtt BuildRole.Arn
+      TimeoutInMinutes: 60
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: buildspec.yml
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux-x86_64-standard:5.0
+        EnvironmentVariables:
+          - Name: STACK_NAME
+            Value: !Ref AppStackName
+          - Name: PLAN_PASSCODE
+            Type: SECRETS_MANAGER
+            Value: !Ref PasscodeSecret
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+
+  # ---------- CodePipeline: source -> (approval) -> deploy ----------
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: codepipeline.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: pipeline
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:GetObjectVersion, s3:PutObject, s3:GetBucketVersioning, s3:GetBucketLocation, s3:ListBucket]
+                Resource:
+                  - !GetAtt ArtifactBucket.Arn
+                  - !Sub '${ArtifactBucket.Arn}/*'
+              - Effect: Allow
+                Action: [codestar-connections:UseConnection, codeconnections:UseConnection]
+                Resource: !If [MakeConnection, !Ref GitHubConnection, !Ref ExistingConnectionArn]
+              - Effect: Allow
+                Action: [codebuild:StartBuild, codebuild:BatchGetBuilds]
+                Resource: !GetAtt DeployProject.Arn
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: !Sub '${AppStackName}-pipeline'
+      PipelineType: V2
+      ExecutionMode: QUEUED
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactBucket
+      Triggers:
+        - ProviderType: CodeStarSourceConnection
+          GitConfiguration:
+            SourceActionName: GitHub
+            Push:
+              - Branches:
+                  Includes: [!Ref BranchName]
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: GitHub
+              ActionTypeId: { Category: Source, Owner: AWS, Provider: CodeStarSourceConnection, Version: '1' }
+              Configuration:
+                ConnectionArn: !If [MakeConnection, !Ref GitHubConnection, !Ref ExistingConnectionArn]
+                FullRepositoryId: !Ref RepositoryId
+                BranchName: !Ref BranchName
+                OutputArtifactFormat: CODE_ZIP
+                DetectChanges: true
+              OutputArtifacts: [{ Name: SourceCode }]
+        - !If
+          - NeedApproval
+          - Name: Approve
+            Actions:
+              - Name: ApproveDeployment
+                ActionTypeId: { Category: Approval, Owner: AWS, Provider: Manual, Version: '1' }
+                Configuration:
+                  CustomData: Approve to deploy this change to the Live Team Resource Plan.
+          - !Ref AWS::NoValue
+        - Name: Deploy
+          Actions:
+            - Name: DeployApp
+              ActionTypeId: { Category: Build, Owner: AWS, Provider: CodeBuild, Version: '1' }
+              Configuration:
+                ProjectName: !Ref DeployProject
+              InputArtifacts: [{ Name: SourceCode }]
+
+Outputs:
+  PipelineUrl:
+    Description: Open the pipeline in the AWS console
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${Pipeline}/view?region=${AWS::Region}'
+  ConnectionArn:
+    Description: GitHub connection. A new one must be approved once in the console before the first run.
+    Value: !If [MakeConnection, !Ref GitHubConnection, !Ref ExistingConnectionArn]
+  ConnectionsConsoleUrl:
+    Description: Where to approve the GitHub connection (Update pending connection)
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/codesuite/settings/connections?region=${AWS::Region}'
+  PasscodeSecretArn:
+    Description: Secrets Manager secret holding the team passcode
+    Value: !Ref PasscodeSecret

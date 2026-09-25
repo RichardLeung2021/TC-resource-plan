@@ -10,8 +10,7 @@ if [ -z "${PLAN_PASSCODE:-}" ]; then
   read -rsp "Team passcode (8+ characters): " PLAN_PASSCODE; echo
 fi
 
-sam build
-sam deploy --stack-name "$STACK" --region "$REGION" --resolve-s3 \
+sam deploy --template-file template.yaml --stack-name "$STACK" --region "$REGION" --resolve-s3 \
   --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset \
   --parameter-overrides "Passcode=$PLAN_PASSCODE"
 

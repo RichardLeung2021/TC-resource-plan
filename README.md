@@ -32,6 +32,9 @@ scripts/local-server.mjs Runs the page on your machine with no AWS account
 scripts/setup-github.sh  One-time setup for automatic deployment from GitHub
 infra/github-deploy-role.yaml   IAM role that GitHub Actions uses to deploy (no access keys)
 .github/workflows/deploy.yml    GitHub Actions workflow: deploys on every push to main
+infra/codepipeline.yaml         AWS CodePipeline + CodeBuild setup (alternative to GitHub Actions)
+buildspec.yml                   Build steps CodeBuild runs for each deployment
+scripts/setup-codepipeline.sh   One-time setup for the CodePipeline option
 ```
 
 ## Try it locally first (optional)
@@ -74,6 +77,65 @@ The first deployment takes about 5 to 10 minutes, mostly while CloudFront sets u
 
 - **Page only:** after editing `frontend/`, run `./scripts/deploy.sh` again. The data is not touched.
 - **Change the passcode:** run `./scripts/deploy.sh` again and enter the new passcode. Everyone then enters the new one the next time they save or load.
+
+## Automatic deployment with AWS CodePipeline
+
+With this option, AWS runs the deployments itself. An AWS CodePipeline watches your GitHub repository. On every push to `main`, it starts an AWS CodeBuild job that deploys the stack, uploads the page and, the first time only, loads the plan data. Your plan data is never overwritten by a deployment.
+
+Choose **either** this **or** the GitHub Actions option below, not both, or every push will deploy twice. If you use CodePipeline, delete `.github/workflows/deploy.yml` from the repository.
+
+```
+GitHub (push to main) ──► CodePipeline ──► [optional manual approval] ──► CodeBuild (buildspec.yml)
+                                                                            ├─ sam deploy (template.yaml)
+                                                                            ├─ upload frontend/ to S3 + clear CloudFront cache
+                                                                            └─ load seed data if the plan is empty
+```
+
+### What gets created (`infra/codepipeline.yaml`)
+
+| Resource | Purpose |
+|---|---|
+| GitHub connection (AWS CodeConnections) | Lets CodePipeline read your repository. Approve it once in the console. |
+| CodePipeline (V2) | Runs on every push to the branch, one deployment at a time. |
+| CodeBuild project | Runs `buildspec.yml`, using a role that can only manage this app's resources. |
+| Secrets Manager secret | Holds the team passcode. CodeBuild reads it at deploy time. |
+| S3 artifact bucket | Holds pipeline artifacts. They are removed after 30 days. |
+
+### Setup
+
+1. **Put the package in a GitHub repository**, with `template.yaml` at the top level. The steps are the same as step 1 of the GitHub Actions option below.
+
+2. **Create the pipeline.** Run this with AWS credentials that can create IAM roles, for example an administrator:
+
+   ```bash
+   ./scripts/setup-codepipeline.sh my-company/lucky-resource-plan eu-west-2
+   ```
+
+   The script asks for the team passcode. You can pass three optional arguments after the region, in this order:
+   - the app stack name (default `lucky-resource-plan`)
+   - the branch (default `main`)
+   - `true`, to require a manual approval before each deployment
+
+   To reuse a GitHub connection you have already approved, set `EXISTING_CONNECTION_ARN` first.
+
+3. **Approve the GitHub connection. You only do this once.** The script prints a link.
+   1. Open the link and choose the connection `lucky-resource-plan-github`.
+   2. Choose **Update pending connection** and sign in to GitHub.
+   3. Allow access to the repository.
+
+4. **Start the first deployment.** In the pipeline, choose **Release change**. After that, every push to `main` deploys automatically. The site address appears at the end of the CodeBuild log, and in the `SiteUrl` output of the `lucky-resource-plan` stack.
+
+**Already deployed the app another way?** Keep the same app stack name. The pipeline takes over that stack, and your data stays.
+
+### Changing things later
+
+- **Change the passcode:**
+  1. Update the secret `lucky-resource-plan/plan-passcode` in Secrets Manager.
+  2. Choose **Release change**.
+- **Add or remove the approval step:** run `setup-codepipeline.sh` again with `true` or `false`.
+- **Remove the pipeline:**
+  1. Empty the pipeline's artifact bucket.
+  2. Delete the `lucky-resource-plan-pipeline` stack. The app and its data are not affected.
 
 ## Automatic deployment from GitHub
 

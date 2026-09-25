@@ -1,0 +1,46 @@
+# AWS CodeBuild build specification, used by the CodePipeline in infra/codepipeline.yaml.
+# Deploys the stack, uploads the page and (first time only) loads the plan data.
+# Environment set by the CodeBuild project:
+#   STACK_NAME     - app stack name, e.g. lucky-resource-plan
+#   PLAN_PASSCODE  - team passcode, read from AWS Secrets Manager
+version: 0.2
+
+env:
+  shell: bash
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - sam --version || pip3 install --quiet aws-sam-cli
+      - sam --version
+
+  build:
+    commands:
+      - echo "Deploying stack $STACK_NAME to $AWS_REGION"
+      - >
+        sam deploy
+        --template-file template.yaml
+        --stack-name "$STACK_NAME"
+        --region "$AWS_REGION"
+        --resolve-s3
+        --capabilities CAPABILITY_IAM
+        --no-confirm-changeset
+        --no-fail-on-empty-changeset
+        --parameter-overrides "Passcode=$PLAN_PASSCODE"
+      - |
+        get() { aws cloudformation describe-stacks --stack-name "$STACK_NAME" --region "$AWS_REGION" \
+          --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
+        BUCKET=$(get SiteBucketName); DIST=$(get DistributionId); SITE_URL=$(get SiteUrl)
+        echo "Uploading the page to s3://$BUCKET"
+        aws s3 sync frontend/ "s3://$BUCKET/" --delete --cache-control "no-cache" --region "$AWS_REGION"
+        aws cloudfront create-invalidation --distribution-id "$DIST" --paths "/*" > /dev/null
+        echo "Loading plan data if the plan is empty"
+        ok=0
+        for i in 1 2 3 4 5 6; do
+          if node scripts/seed.mjs "$SITE_URL" "$PLAN_PASSCODE"; then ok=1; break; fi
+          echo "API not ready yet, retrying in 20 seconds..."; sleep 20
+        done
+        if [ "$ok" != 1 ]; then echo "Could not load the plan data. Check the passcode secret and the API logs."; exit 1; fi
+        echo "Deployed: $SITE_URL"
