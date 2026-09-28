@@ -82,10 +82,10 @@ table.grid{border-collapse:separate;border-spacing:0;font-family:var(--cond);fon
 .grid thead tr.d th.sl{text-align:left;padding-left:10px;font-size:13px}
 .grid .sl{position:sticky;z-index:2}
 .grid thead .sl{z-index:5}
-.c0{left:0;width:180px;min-width:180px;max-width:180px}
-.c1{left:180px;width:170px;min-width:170px;max-width:170px}
-.c2{left:350px;width:112px;min-width:112px;max-width:112px}
-.c3{left:462px;width:62px;min-width:62px;max-width:62px;text-align:center}
+.c0{left:0;width:206px;min-width:206px;max-width:206px}
+.c1{left:206px;width:170px;min-width:170px;max-width:170px}
+.c2{left:376px;width:112px;min-width:112px;max-width:112px}
+.c3{left:488px;width:62px;min-width:62px;max-width:62px;text-align:center}
 .grid .c3{border-right:2px solid var(--line2)}
 .grid th.w,.grid td.w{width:44px;min-width:44px;max-width:44px;text-align:center}
 .grid th.w small{display:block;font-weight:500;opacity:.8}
@@ -97,8 +97,8 @@ tr.b td.bh{left:0;padding:0 10px 0 4px;white-space:nowrap}
 .bh strong{font:700 16px var(--sans);vertical-align:middle;letter-spacing:.01em}
 .bh .meta{margin-left:10px;font-size:13px;opacity:.85;vertical-align:middle}
 tr.g td{background:var(--bg);height:46px;border-top:1px solid var(--line2)}
-tr.g td.gh{left:0;padding:0 8px 0 4px;max-width:524px}
-.ghw{display:flex;align-items:center;gap:6px;max-width:514px}
+tr.g td.gh{left:0;padding:0 8px 0 4px;max-width:550px}
+.ghw{display:flex;align-items:center;gap:6px;max-width:540px}
 .ght{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.2}
 .ght strong,.ght .meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gh .tog{border:0;background:none;width:22px;height:22px;padding:0;color:var(--muted);font-size:12px;vertical-align:middle}
@@ -114,6 +114,24 @@ tr.g td.w.win{background:var(--win)}
 .pick:hover{background:var(--win)}
 .c0 .wrap{display:flex;align-items:center}
 .c0 .pick{flex:1;min-width:0}
+.rsel,.gsel{width:16px;height:16px;margin:0 2px 0 8px;flex:none;accent-color:var(--felt);cursor:pointer}
+.gsel{margin:0 0 0 4px}
+tr.picked td.sl{background:var(--brass-soft)}
+.selbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 20px 10px;padding:8px 12px;border-radius:8px;background:var(--brass-soft);font-size:14px;flex:none}
+.selbar strong{margin-right:4px}
+.msel{display:inline-flex;align-items:center;gap:8px;text-align:left;min-width:150px;cursor:pointer}
+.msel::after{content:'▾';margin-left:auto;color:var(--muted)}
+.msel.on{border-color:var(--felt);background:var(--felt-soft);font-weight:600}
+.pop{position:fixed;z-index:52;width:300px;background:var(--surface);border:1px solid var(--line2);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:8px;font-size:14px}
+.pop .inp{width:100%;height:32px}
+.pop .pacts{display:flex;justify-content:space-between;margin:6px 2px}
+.pop .pacts button{border:0;background:none;color:var(--felt);font-weight:600;font-size:13px;padding:2px 4px}
+.pop .plist{max-height:300px;overflow:auto;margin-top:2px}
+.pop label{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:5px;cursor:pointer}
+.pop label:hover{background:var(--win)}
+.pop label small{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap}
+.pop input[type=checkbox]{accent-color:var(--felt)}
+.pop .none{color:var(--muted);font-style:italic;padding:6px}
 .more{border:0;background:none;width:26px;height:31px;color:var(--muted);font-size:16px;line-height:1;flex:none}
 .more:hover{color:var(--ink)}
 .picksel{width:100%;height:31px;border:0;background:var(--surface);font:inherit;padding:0 4px}
@@ -187,6 +205,23 @@ td.a.over{background:var(--red);color:#fff;font-weight:700}
 .menu button:hover,.menu button:focus-visible{background:var(--win)}
 .menu button.danger{color:var(--red)}
 dialog{border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);padding:18px 20px;width:min(440px,calc(100vw - 32px))}
+dialog.wide{width:min(900px,calc(100vw - 32px))}
+.modes{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 4px}
+.modes label{flex:1;min-width:220px;display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line2);border-radius:8px;padding:10px 12px;margin:0;color:var(--ink);font-weight:500;font-size:14px;cursor:pointer}
+.modes label:has(input:checked){border-color:var(--felt);background:var(--felt-soft)}
+.modes small{display:block;color:var(--muted);font-weight:400;margin-top:2px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 8px}
+.chip{border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600;background:var(--win)}
+.chip.new{background:var(--felt-soft);color:var(--felt)}
+.chip.upd{background:var(--brass-soft);color:var(--ink)}
+.chip.err{background:var(--red-soft);color:var(--red)}
+.impnote{font-size:13px;color:var(--muted);margin:4px 0}
+.imptbl{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.imptbl table{border-collapse:collapse;width:100%;font-size:13px}
+.imptbl th{position:sticky;top:0;background:var(--surface);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line2);color:var(--muted);font-weight:600;white-space:nowrap}
+.imptbl td{padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.st{font-weight:600;white-space:nowrap}
+.st.new{color:var(--felt)} .st.upd{color:var(--brass)} .st.skip{color:var(--muted)} .st.err{color:var(--red)}
 dialog::backdrop{background:rgba(10,20,17,.45)}
 dialog h2{margin:0 0 4px;font:700 19px var(--sans)}
 dialog p{margin:0 0 12px;color:var(--muted);font-size:14px}
@@ -204,13 +239,13 @@ dialog .acts{display:flex;flex-direction:row-reverse;justify-content:flex-start;
   .scroll{margin:0 10px 10px}
   .inp.search{width:100%}
   #p-plan .legend{display:none}
-  tr.g td.gh,.ghw{max-width:286px}
+  tr.g td.gh,.ghw{max-width:308px}
   .split{flex-direction:column;padding:0 10px 10px;overflow:auto}
   .split .scroll{min-height:360px;flex:none}
   .side{width:auto;overflow:visible}
   .grid .c2,.grid .c3{left:auto}
-  .c0{width:150px;min-width:150px;max-width:150px}
-  .c1{left:150px;width:140px;min-width:140px;max-width:140px}
+  .c0{width:172px;min-width:172px;max-width:172px}
+  .c1{left:172px;width:140px;min-width:140px;max-width:140px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -239,7 +274,7 @@ dialog .acts{display:flex;flex-direction:row-reverse;justify-content:flex-start;
       <select class="sel" id="fBrand" aria-label="Brand"></select>
       <select class="sel" id="fCat"></select>
       <select class="sel" id="fReg"></select>
-      <select class="sel" id="fPerson"></select>
+      <button type="button" class="sel msel" id="fPerson" aria-haspopup="dialog" aria-expanded="false">All people</button>
       <select class="sel" id="fYear" aria-label="Year shown"></select>
       <button class="btn small" id="addYear" hidden></button>
       <label class="check"><input type="checkbox" id="fHide"> Hide unassigned rows</label>
@@ -252,12 +287,17 @@ dialog .acts{display:flex;flex-direction:row-reverse;justify-content:flex-start;
         <span><b style="background:var(--brass-soft);box-shadow:inset 0 -3px 0 var(--brass)"></b>Outside project dates</span>
       </div>
     </div>
+    <div class="selbar" id="selbar" hidden role="region" aria-label="Selected rows"><strong id="selN"></strong><button class="btn small danger" id="selDel">Delete selected rows</button><button class="btn small" id="selClear">Clear selection</button></div>
     <div class="scroll" id="planScroll"><div class="state" id="planState"><h2>Loading the plan</h2><p>Fetching projects, people and weekly FTE.</p></div><table class="grid" id="planGrid" hidden></table></div>
   </section>
 
   <section class="panel" id="p-projects">
     <div class="toolbar">
       <button class="btn primary" id="addProject">Add project</button>
+      <button class="btn" id="impProjects">Import from Excel</button>
+      <button class="btn small" id="tplProjects" hidden>Download template</button>
+      <button class="btn small" id="expProjects" hidden>Export to Excel</button>
+      <input type="file" id="fileProjects" accept=".xlsx,.xls,.csv" hidden>
       <span class="count" id="projCount"></span>
     </div>
     <div class="split">
@@ -269,6 +309,10 @@ dialog .acts{display:flex;flex-direction:row-reverse;justify-content:flex-start;
   <section class="panel" id="p-team">
     <div class="toolbar">
       <button class="btn primary" id="addPerson">Add person</button>
+      <button class="btn" id="impTeam">Import from Excel</button>
+      <button class="btn small" id="tplTeam" hidden>Download template</button>
+      <button class="btn small" id="expTeam" hidden>Export to Excel</button>
+      <input type="file" id="fileTeam" accept=".xlsx,.xls,.csv" hidden>
       <input class="inp search" id="tq" type="search" placeholder="Filter by name">
       <select class="sel" id="tRole" aria-label="Filter by role"></select>
       <select class="sel" id="tReg" aria-label="Filter by location"></select>
@@ -298,6 +342,7 @@ dialog .acts{display:flex;flex-direction:row-reverse;justify-content:flex-start;
 
 <div class="menu" id="menu" hidden role="menu"></div>
 <ul id="plist" role="listbox" aria-label="Matching people" hidden></ul>
+<div class="pop" id="pfPop" hidden role="dialog" aria-label="Filter by people"></div>
 
 <dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
 <div class="toast" id="toast" hidden></div>
@@ -312,7 +357,7 @@ const DAY=864e5;
 const S={projects:new Map(),people:new Map(),resources:new Map(),
   lists:{regions:[],roles:[],categories:[],brands:['Lucky','EEZE','PT','Choice'],weekStart:'2026-08-03',weeks:48},
   loaded:{p:false,u:false,r:false,l:false},db:null,dl:null,readOnly:false,noDb:false};
-const ui={tab:'plan',q:'',cat:'',region:'',person:'',hideEmpty:false,collapsed:new Set(),focus:null,tq:'',aReg:'',aOnly:true,brand:'',aBrand:'',bcollapsed:new Set(),year:'',tRole:'',tReg:'',tSort:{k:'name',d:1}};
+const ui={tab:'plan',q:'',cat:'',region:'',person:'',hideEmpty:false,collapsed:new Set(),focus:null,tq:'',aReg:'',aOnly:true,persons:new Set(),sel:new Set(),lastSel:null,brand:'',aBrand:'',bcollapsed:new Set(),year:'',tRole:'',tReg:'',tSort:{k:'name',d:1}};
 try{const t=localStorage.getItem('lrp.tab'); if(t) ui.tab=t;}catch(e){}
 
 /* ---------- helpers ---------- */
@@ -405,6 +450,7 @@ function render(){
   if(!allLoaded()) return;
   { const f=new Date(weekStart(0)), l=new Date(weekStart(nW()-1)); $('#sub').textContent=`Weekly FTE by project, ${MON[f.getUTCMonth()]} ${f.getUTCFullYear()} to ${MON[l.getUTCMonth()]} ${l.getUTCFullYear()}`; }
   fillFilters();
+  ['#impTeam','#impProjects'].forEach(x=>$(x).hidden=S.readOnly);
   if(ui.tab==='plan') renderPlan();
   else if(ui.tab==='projects') renderProjects();
   else if(ui.tab==='team') renderTeam();
@@ -424,13 +470,16 @@ function fillFilters(){
   $('#tReg').innerHTML=opts(S.lists.regions.map(c=>({v:c,t:c})).concat([{v:'__none',t:'No location'}]),ui.tReg,'All locations');
   $('#fCat').innerHTML=opts(S.lists.categories.map(c=>({v:c,t:c})),ui.cat,'All categories');
   $('#fReg').innerHTML=opts(S.lists.regions.map(c=>({v:c,t:c})),ui.region,'All locations');
-  $('#fPerson').innerHTML=opts(peopleSorted().map(p=>({v:p.id,t:p.name})),ui.person,'All people');
+  [...ui.persons].forEach(id=>{ if(id!=='__none' && !S.people.has(id)) ui.persons.delete(id); });
+  { const n=ui.persons.size, b=$('#fPerson'); const one=n===1?[...ui.persons][0]:null;
+    b.textContent= !n? 'All people' : one? (one==='__none'?'Unassigned rows':(S.people.get(one)||{}).name) : n+' selected';
+    b.classList.toggle('on',n>0); }
   $('#aReg').innerHTML=opts(S.lists.regions.map(c=>({v:c,t:c})),ui.aReg,'All locations');
 }
 $('#q').addEventListener('input',e=>{ ui.q=e.target.value.trim().toLowerCase(); clearTimeout(ui._qt); ui._qt=setTimeout(render,150); });
 $('#fCat').addEventListener('change',e=>{ ui.cat=e.target.value; render(); });
 $('#fReg').addEventListener('change',e=>{ ui.region=e.target.value; render(); });
-$('#fPerson').addEventListener('change',e=>{ ui.person=e.target.value; render(); });
+
 $('#fHide').addEventListener('change',e=>{ ui.hideEmpty=e.target.checked; render(); });
 $('#collapseAll').addEventListener('click',()=>{ S.projects.forEach((p,id)=>ui.collapsed.add(id)); render(); });
 $('#expandAll').addEventListener('click',()=>{ ui.collapsed.clear(); render(); });
@@ -465,7 +514,7 @@ function weekHeader(V){
 function rowVisible(r,p,qProj){
   const person=r.personId?S.people.get(r.personId):null;
   if(ui.hideEmpty && !person) return false;
-  if(ui.person && r.personId!==ui.person) return false;
+  if(ui.persons.size && !ui.persons.has(r.personId||'__none')) return false;
   if(ui.region && (!person||person.region!==ui.region)) return false;
   if(ui.q && !qProj){ const hay=((person?person.name:'')+' '+effRole(r)).toLowerCase(); if(!hay.includes(ui.q)) return false; }
   return true;
@@ -476,7 +525,7 @@ function renderPlan(){
   if(!projects.length){ grid.hidden=true; st.hidden=false; st.innerHTML='<h2>No projects yet</h2><p>Add your first project on the Projects tab, then plan people against it here.</p>'; return; }
   st.hidden=true; grid.hidden=false;
   const W=nW(); const V=vis(); const {m,d,starts}=weekHeader(V);
-  const filtersOn=!!(ui.q||ui.person||ui.region||ui.hideEmpty);
+  const filtersOn=!!(ui.q||ui.persons.size||ui.region||ui.hideEmpty);
   const tot=new Array(W).fill(0); let body=''; let shownRows=0;
   for(const bn of brandOrder(projects)){
   if(ui.brand && bn!==ui.brand) continue;
@@ -494,7 +543,8 @@ function renderPlan(){
     const e=parseD(p.end), s=parseD(p.start);
     let warn=''; if(e!=null && s!=null && e<s) warn='End is before start'; else if(e!=null && e<weekStart(0)) warn='Ends before this calendar';
     const meta=[p.category, fmtDate(p.start)+' to '+fmtDate(p.end), p.status].filter(Boolean).join(', ');
-    pb+=`<tr class="g" data-p="${esc(p.id)}"><td class="sl gh" colspan="4"><div class="ghw"><button class="tog" aria-expanded="${!collapsed}" aria-label="${collapsed?'Expand':'Collapse'} ${esc(p.name)}">${collapsed?'▶':'▼'}</button><div class="ght"><strong title="${esc(p.name)}">${esc(p.name)}</strong><span class="meta" title="${esc(meta)}">${warn?`<span class="warn">${esc(warn)}. </span>`:''}${esc(meta)}</span></div>${S.readOnly?'':`<button class="btn small add">Add person</button>`}</div></td>`;
+    const nSel=rows.filter(r=>ui.sel.has(r.id)).length;
+    pb+=`<tr class="g" data-p="${esc(p.id)}"><td class="sl gh" colspan="4"><div class="ghw">${S.readOnly||!rows.length||collapsed?'':`<input type="checkbox" class="gsel" aria-label="Select all rows in ${esc(p.name)}"${nSel&&nSel===rows.length?' checked':''}${nSel&&nSel<rows.length?' data-ind="1"':''}>`}<button class="tog" aria-expanded="${!collapsed}" aria-label="${collapsed?'Expand':'Collapse'} ${esc(p.name)}">${collapsed?'▶':'▼'}</button><div class="ght"><strong title="${esc(p.name)}">${esc(p.name)}</strong><span class="meta" title="${esc(meta)}">${warn?`<span class="warn">${esc(warn)}. </span>`:''}${esc(meta)}</span></div>${S.readOnly?'':`<button class="btn small add">Add person</button>`}</div></td>`;
     for(const i of V) pb+=`<td class="w${inWin(p,i)?' win':''}${starts.has(i)?' mstart':''}">${fmt1(pw[i])}</td>`;
     pb+='</tr>';
     if(collapsed) continue;
@@ -505,7 +555,8 @@ function renderPlan(){
       for(const i of V){ const v=+f[i]||0; t+=v; const w=inWin(p,i); let cls='w c'; if(v>0) cls+=' '+(w||e==null?heat(v):'out'); else if(w) cls+=' win'; if(starts.has(i)) cls+=' mstart';
         cells+=`<td class="${cls}" tabindex="-1" data-i="${i}">${fmt(v)}</td>`; }
       const role=effRole(r), slot=!(person&&person.role);
-      pb+=`<tr data-r="${esc(r.id)}"><td class="sl c0"><div class="wrap"><button class="pick${person?'':' none'}" data-k="person" title="${esc(person?person.name:'Choose a person')}">${esc(person?person.name:'Unassigned')}</button>${S.readOnly?'':'<button class="more" aria-label="Row actions">⋯</button>'}</div></td>`+
+      const picked=ui.sel.has(r.id);
+      pb+=`<tr data-r="${esc(r.id)}"${picked?' class="picked"':''}><td class="sl c0"><div class="wrap">${S.readOnly?'':`<input type="checkbox" class="rsel" aria-label="Select row"${picked?' checked':''}>`}<button class="pick${person?'':' none'}" data-k="person" title="${esc(person?person.name:'Choose a person')}">${esc(person?person.name:'Unassigned')}</button>${S.readOnly?'':'<button class="more" aria-label="Row actions">⋯</button>'}</div></td>`+
         `<td class="sl c1 ro${slot?' slot':''}" title="${esc(slot&&role?'Role slot on this project. It changes to the person’s role once someone with a role is assigned.':role)}">${esc(role)}</td>`+
         `<td class="sl c2">${esc(person&&person.region||'')}</td><td class="sl c3">${fmt1(t)}</td>${cells}</tr>`;
     }
@@ -520,11 +571,35 @@ function renderPlan(){
   grid.innerHTML=`<thead><tr class="m"><th class="sl" style="left:0" colspan="4"></th>${m}</tr>`+
     `<tr class="d"><th class="sl c0">Person</th><th class="sl c1">Role</th><th class="sl c2">Location</th><th class="sl c3" title="Total FTE-weeks for the weeks shown">Total</th>${d}</tr>`+
     `<tr class="t"><th class="sl" style="left:0;text-align:left;padding-left:10px" colspan="3">Total FTE, rows shown</th><th class="sl c3">${fmt1(grand)}</th>${tr}</tr></thead><tbody>${body}</tbody>`;
+  grid.querySelectorAll('[data-ind]').forEach(x=>x.indeterminate=true);
+  updSelbar();
   if(ui.focus){ const td=grid.querySelector(`tr[data-r="${CSS.escape(ui.focus.rid)}"] td[data-i="${ui.focus.i}"]`); if(td && document.activeElement===document.body) td.focus({preventScroll:true}); }
 }
 
 const grid=$('#planGrid');
+function updSelbar(){
+  [...ui.sel].forEach(id=>{ if(!S.resources.has(id)) ui.sel.delete(id); });
+  const n=ui.sel.size; $('#selbar').hidden=!n||S.readOnly;
+  if(n){ const hidden=[...ui.sel].filter(id=>!grid.querySelector(`tr[data-r="${CSS.escape(id)}"]`)).length;
+    $('#selN').textContent=`${n} row${n>1?'s':''} selected`+(hidden?` (${hidden} not shown by the current filters)`:''); }
+}
+function setSel(ids,on){ ids.forEach(id=>on?ui.sel.add(id):ui.sel.delete(id)); ui.focus=null; render(); }
+$('#selClear').addEventListener('click',()=>{ ui.sel.clear(); ui.lastSel=null; render(); });
+$('#selDel').addEventListener('click',()=>{
+  if(S.readOnly) return; const ids=[...ui.sel].filter(id=>S.resources.has(id)); if(!ids.length) return;
+  const rows=ids.map(id=>S.resources.get(id)); const named=rows.filter(r=>r.personId&&S.people.has(r.personId)).length;
+  const fte=rows.reduce((a,r)=>a+(r.fte||[]).reduce((x,y)=>x+(+y||0),0),0); const projs=new Set(rows.map(r=>r.project)).size;
+  confirmDialog(`Delete ${ids.length} row${ids.length>1?'s':''}?`,
+    `${ids.length} row${ids.length>1?'s':''} across ${projs} project${projs>1?'s':''}: ${named} with a person assigned, ${ids.length-named} unassigned. `+(fte?`Their weekly FTE (${fmt1(fte)} FTE-weeks in total) is deleted too. `:'')+'People stay on the team list.',
+    'Delete rows',()=>{ ids.forEach(id=>delDoc('resources',id)); ui.sel.clear(); ui.lastSel=null; toast(`Deleted ${ids.length} row${ids.length>1?'s':''}.`); schedule(); });
+});
 grid.addEventListener('click',e=>{
+  const rs=e.target.closest('.rsel'); if(rs){ const rid=rs.closest('tr').dataset.r;
+    if(e.shiftKey && ui.lastSel){ const order=[...grid.querySelectorAll('tr[data-r]')].map(t=>t.dataset.r); const a=order.indexOf(ui.lastSel), b=order.indexOf(rid);
+      if(a>=0&&b>=0){ setSel(order.slice(Math.min(a,b),Math.max(a,b)+1),rs.checked); ui.lastSel=rid; return; } }
+    ui.lastSel=rid; setSel([rid],rs.checked); return; }
+  const gs=e.target.closest('.gsel'); if(gs){ const pid=gs.closest('tr').dataset.p; let tr=gs.closest('tr').nextElementSibling; const ids=[];
+    while(tr && tr.dataset.r){ ids.push(tr.dataset.r); tr=tr.nextElementSibling; } setSel(ids,gs.checked); return; }
   const t=e.target;
   const bt=t.closest('.btog'); if(bt){ const bn=bt.closest('tr').dataset.b; ui.bcollapsed.has(bn)?ui.bcollapsed.delete(bn):ui.bcollapsed.add(bn); render(); return; }
   const tog=t.closest('.tog'); if(tog){ const pid=tog.closest('tr').dataset.p; ui.collapsed.has(pid)?ui.collapsed.delete(pid):ui.collapsed.add(pid); render(); return; }
@@ -686,6 +761,33 @@ function addRow(pid,role,afterId){
   setTimeout(()=>{ const b=document.querySelector(`tr[data-r="${CSS.escape(id)}"] .pick[data-k="person"]`); if(b){ b.scrollIntoView({block:'nearest'}); b.focus(); } },120);
 }
 
+
+/* ---------- people multi-select filter ---------- */
+const pfBtn=$('#fPerson'), pfPop=$('#pfPop'); let pfQ='';
+function pfClose(){ pfPop.hidden=true; pfBtn.setAttribute('aria-expanded','false'); }
+function pfDraw(){
+  const q=pfQ.toLowerCase(); const counts=new Map(); S.resources.forEach(r=>{ const k=r.personId&&S.people.has(r.personId)?r.personId:'__none'; counts.set(k,(counts.get(k)||0)+1); });
+  const items=[{id:'__none',name:'Unassigned rows',meta:''}].concat(peopleSorted().map(p=>({id:p.id,name:p.name,meta:p.role||''})))
+    .filter(x=>!q||x.name.toLowerCase().includes(q)||x.meta.toLowerCase().includes(q));
+  const list=pfPop.querySelector('.plist');
+  list.innerHTML= items.length? items.map(x=>`<label><input type="checkbox" data-id="${esc(x.id)}"${ui.persons.has(x.id)?' checked':''}><span${x.id==='__none'?' style="font-style:italic"':''}>${esc(x.name)}</span><small>${esc(x.meta)}${counts.get(x.id)?' · '+counts.get(x.id)+' row'+(counts.get(x.id)>1?'s':''):''}</small></label>`).join('') : '<div class="none">No one matches.</div>';
+  pfPop.querySelector('.pcount').textContent= ui.persons.size? ui.persons.size+' selected' : 'Showing everyone';
+}
+function pfOpen(){
+  pfQ=''; pfPop.innerHTML=`<input class="inp" type="search" placeholder="Search people or roles" aria-label="Search people"><div class="pacts"><span class="pcount" style="color:var(--muted);font-size:13px"></span><span><button type="button" data-a="shown">Select shown</button><button type="button" data-a="clear">Clear</button></span></div><div class="plist"></div>`;
+  pfPop.hidden=false; pfBtn.setAttribute('aria-expanded','true');
+  const b=pfBtn.getBoundingClientRect(); pfPop.style.left=Math.max(8,Math.min(b.left,innerWidth-308))+'px'; pfPop.style.top=(b.bottom+4)+'px';
+  pfDraw(); const inp=pfPop.querySelector('input'); inp.focus();
+  inp.addEventListener('input',()=>{ pfQ=inp.value.trim(); pfDraw(); });
+}
+pfBtn.addEventListener('click',()=>{ pfPop.hidden? pfOpen() : pfClose(); });
+pfPop.addEventListener('change',e=>{ const id=e.target.dataset.id; if(!id) return; e.target.checked? ui.persons.add(id) : ui.persons.delete(id); pfDraw(); render(); });
+pfPop.addEventListener('click',e=>{ const a=e.target.dataset.a; if(!a) return;
+  if(a==='clear') ui.persons.clear(); else pfPop.querySelectorAll('.plist input[data-id]').forEach(x=>ui.persons.add(x.dataset.id));
+  pfDraw(); render(); });
+document.addEventListener('mousedown',e=>{ if(!pfPop.hidden && !pfPop.contains(e.target) && e.target!==pfBtn) pfClose(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !pfPop.hidden){ pfClose(); pfBtn.focus(); } });
+
 /* ---------- row menu ---------- */
 const menu=$('#menu');
 function closeMenu(){ menu.hidden=true; menu.innerHTML=''; }
@@ -707,8 +809,8 @@ function openRowMenu(btn){
 
 /* ---------- dialogs ---------- */
 const dlg=$('#dlg'), dform=$('#dlgForm');
-function openDlg(html,onOk){
-  dform.innerHTML=html; dform.onsubmit=e=>{ const sub=e.submitter; if(sub && sub.value==='cancel') return; if(onOk(new FormData(dform))===false){ e.preventDefault(); } };
+function openDlg(html,onOk,wide){
+  dlg.classList.toggle('wide',!!wide); dform.innerHTML=html; dform.onsubmit=e=>{ const sub=e.submitter; if(sub && sub.value==='cancel') return; if(onOk(new FormData(dform))===false){ e.preventDefault(); } };
   dlg.showModal(); const f=dform.querySelector('[data-af]')||dform.querySelector('input,select,textarea'); if(f){ f.focus(); if(f.select) f.select(); }
 }
 function confirmDialog(title,text,okLabel,fn){ openDlg(`<h2>${esc(title)}</h2><p>${esc(text)}</p><div class="acts"><button class="btn primary danger-ok" value="ok" style="background:var(--red);border-color:var(--red);color:#fff">${esc(okLabel)}</button><button class="btn" value="cancel" formnovalidate>Cancel</button></div>`,()=>{ fn(); }); }
@@ -896,6 +998,204 @@ function renderAlloc(){
   g.innerHTML=`<thead><tr class="m"><th class="sl" style="left:0" colspan="4"></th>${m}</tr><tr class="d"><th class="sl c0">Person</th><th class="sl c1">Role</th><th class="sl c2">Location</th><th class="sl c3">Peak</th>${d}</tr></thead><tbody>${body}</tbody>`;
 }
 
+
+/* ---------- Excel bulk import ---------- */
+function xlsxReady(){ if(!window.XLSX){ toast('The Excel tools are still loading. Try again in a moment.'); return false; } return true; }
+async function saveBook(wb,filename){
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  try{ await S.dl.save({filename,data:buf}); toast(filename+' saved.'); }
+  catch(e){ if(e&&e.code==='declined') return; toast('The file could not be saved here.'); }
+}
+function sheetFrom(aoa,widths){ const ws=XLSX.utils.aoa_to_sheet(aoa); if(widths) ws['!cols']=widths.map(w=>({wch:w})); return ws; }
+function listsSheet(cols){ const n=Math.max(...cols.map(c=>c[1].length)); const aoa=[cols.map(c=>c[0])]; for(let i=0;i<n;i++) aoa.push(cols.map(c=>c[1][i]||'')); return sheetFrom(aoa,cols.map(()=>26)); }
+const low=v=>String(v==null?'':v).trim().toLowerCase();
+function canon(v,list){ const t=String(v==null?'':v).trim(); if(!t) return ''; const hit=list.find(x=>x.toLowerCase()===t.toLowerCase()); return hit||t; }
+function pad2(n){ return String(n).padStart(2,'0'); }
+function isoOf(y,m,d){ const t=Date.UTC(y,m-1,d); const dt=new Date(t); if(dt.getUTCFullYear()!==y||dt.getUTCMonth()!==m-1||dt.getUTCDate()!==d) return undefined; return `${y}-${pad2(m)}-${pad2(d)}`; }
+function parseCellDate(v){
+  if(v==null) return null;
+  if(typeof v==='number'){ const c=XLSX.SSF.parse_date_code(v); return c? isoOf(c.y,c.m,c.d) : undefined; }
+  if(v instanceof Date) return isoOf(v.getFullYear(),v.getMonth()+1,v.getDate());
+  const s=String(v).trim(); if(!s||/^(n\/?a|tbc|tbd|-)$/i.test(s)) return null;
+  let m;
+  if((m=/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(s))) return isoOf(+m[1],+m[2],+m[3]);
+  if((m=/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/.exec(s))){ let d=+m[1],mo=+m[2],y=+m[3]; if(y<100) y+=2000; if(mo>12&&d<=12){ const t=d; d=mo; mo=t; } return isoOf(y,mo,d); }
+  if((m=/^(\d{1,2})[\s-]([A-Za-z]{3,9})[\s-](\d{2,4})$/.exec(s))){ const mo=MON.findIndex(x=>x.toLowerCase()===m[2].slice(0,3).toLowerCase())+1; let y=+m[3]; if(y<100) y+=2000; return mo? isoOf(y,mo,+m[1]) : undefined; }
+  return undefined;
+}
+async function readRows(file,prefer,cols){
+  const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
+  const name=wb.SheetNames.find(n=>n.toLowerCase()===prefer.toLowerCase())||wb.SheetNames[0];
+  const aoa=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:true,defval:''});
+  const hi=aoa.findIndex(r=>r.some(c=>cols[0].alias.includes(low(c))));
+  if(hi<0) return {error:`Couldn’t find a “${cols[0].label}” column. Use the template’s first sheet, with the column names in the top row.`};
+  const head=aoa[hi].map(low); const idx={};
+  for(const c of cols){ idx[c.key]=head.findIndex(h=>c.alias.includes(h)); }
+  const missing=cols.filter(c=>c.req && idx[c.key]<0).map(c=>c.label);
+  if(missing.length) return {error:'These columns are missing: '+missing.join(', ')+'. Download the template to see the expected layout.'};
+  const rows=[];
+  for(let i=hi+1;i<aoa.length;i++){ const r=aoa[i]; if(!r||r.every(c=>String(c).trim()==='')) continue;
+    const o={_row:i+1}; for(const c of cols) o[c.key]= idx[c.key]<0? '' : r[idx[c.key]]; rows.push(o); }
+  return {rows,sheet:name};
+}
+function pickFile(input,fn){ input.value=''; input.onchange=()=>{ const f=input.files[0]; if(f) fn(f); }; input.click(); }
+function modeHtml(kind){
+  const what=kind==='team'?'people':'projects';
+  const up=kind==='team'?'Rows whose name matches an existing person replace that person’s role and location.':'Rows whose project name matches an existing project replace its brand, category, dates, status and details.';
+  return `<div class="modes" role="radiogroup" aria-label="Import mode">
+    <label><input type="radio" name="mode" value="append" checked><span>Append<small>Add the rows as new ${what}. Rows already in the plan are skipped.</small></span></label>
+    <label><input type="radio" name="mode" value="overwrite"><span>Overwrite<small>${up} Other rows are added. ${kind==='team'?'People':'Projects'} not in the file are kept.</small></span></label></div>`;
+}
+function previewHtml(res,cols){
+  const c={new:0,upd:0,skip:0,err:0}; res.items.forEach(x=>c[x.st]++);
+  const lab={new:'New',upd:'Update',skip:'Skip',err:'Error'};
+  let h=`<div class="chips"><span class="chip new">${c.new} new</span><span class="chip upd">${c.upd} to update</span><span class="chip">${c.skip} skipped</span>${c.err?`<span class="chip err">${c.err} with errors</span>`:''}</div>`;
+  for(const n of res.notes) h+=`<p class="impnote">${esc(n)}</p>`;
+  h+=`<div class="imptbl"><table><thead><tr><th>Row</th><th>Result</th>${cols.map(x=>`<th>${esc(x[1])}</th>`).join('')}<th>Note</th></tr></thead><tbody>`+
+    res.items.map(x=>`<tr><td>${x.row}</td><td class="st ${x.st}">${lab[x.st]}</td>${cols.map(k=>`<td>${esc(x.show[k[0]]||'')}</td>`).join('')}<td>${esc(x.msg||'')}</td></tr>`).join('')+'</tbody></table></div>';
+  return {html:h,count:c.new+c.upd};
+}
+function runImportDialog(title,intro,kind,analyse,cols,extraHtml,apply){
+  openDlg(`<h2>${esc(title)}</h2><p>${esc(intro)}</p>${modeHtml(kind)}${extraHtml||''}<div id="impBody"></div>
+    <div class="acts"><button class="btn primary" value="ok" id="impGo">Import</button><button class="btn" value="cancel" formnovalidate>Cancel</button></div>`,fd=>{
+      const res=analyse(fd.get('mode')); const n=res.items.filter(x=>x.st==='new'||x.st==='upd').length;
+      if(!n){ toast('Nothing to import with this option.'); return false; }
+      apply(res,fd);
+    },true);
+  const draw=()=>{ const mode=dform.querySelector('input[name=mode]:checked').value; const res=analyse(mode); const pv=previewHtml(res,cols);
+    $('#impBody').innerHTML=pv.html; const go=$('#impGo'); go.disabled=!pv.count; go.textContent= pv.count? `Import ${pv.count} row${pv.count>1?'s':''}` : 'Nothing to import'; };
+  dform.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',draw)); draw();
+  const go=$('#impGo'); if(go) go.focus();
+}
+
+/* team */
+const TEAM_COLS=[{key:'name',label:'Name',req:1,alias:['name','person','person name','full name']},{key:'role',label:'Role',req:1,alias:['role','job role']},{key:'region',label:'Location',req:1,alias:['location','region','country','office']}];
+function teamBook(rows){
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,sheetFrom([['Name','Role','Location'],...rows],[28,26,20]),'Team');
+  XLSX.utils.book_append_sheet(wb,sheetFrom([['How to use this template'],[''],['1. Fill in one person per row on the Team sheet: Name, Role and Location. Keep the column names in row 1.'],['2. Role and Location should match the lists on the Valid values sheet. New values are added to the lists when you import.'],['3. On the Team tab, choose Import from Excel and pick this file. You can check every row before anything is saved.'],[''],['Append adds the rows as new people. A row is skipped if a person with the same name, role and location already exists.'],['Overwrite updates the role and location of the existing person with the same name, and adds anyone new. People not in the file are kept.']],[110]),'Instructions');
+  XLSX.utils.book_append_sheet(wb,listsSheet([['Role',S.lists.roles],['Location',S.lists.regions]]),'Valid values');
+  return wb; }
+function stamp(){ const d=new Date(); return d.getFullYear()+pad2(d.getMonth()+1)+pad2(d.getDate()); }
+$('#tplTeam').addEventListener('click',()=>{ if(xlsxReady()) saveBook(teamBook([]),'Team_import_template.xlsx'); });
+$('#expTeam').addEventListener('click',()=>{ if(!xlsxReady()) return;
+  const rows=peopleSorted().map(p=>[p.name,p.role||'',p.region||'']);
+  if(!rows.length){ toast('There are no people to export yet.'); return; }
+  saveBook(teamBook(rows),'Team_export_'+stamp()+'.xlsx'); });
+$('#impTeam').addEventListener('click',()=>{ if(S.readOnly||!xlsxReady()) return; pickFile($('#fileTeam'),async f=>{
+  let data; try{ data=await readRows(f,'Team',TEAM_COLS); }catch(e){ toast('That file could not be read. Save it as .xlsx and try again.'); return; }
+  if(data.error){ toast(data.error); return; }
+  if(!data.rows.length){ toast('The file has no people in it. Add rows under the column names and try again.'); return; }
+  const analyse=mode=>{
+    const people=[...S.people.values()]; const key=(n,r,l)=>low(n)+'|'+low(r)+'|'+low(l);
+    const exKeys=new Set(people.map(p=>key(p.name,p.role,p.region))); const seen=new Set(); const touched=new Set();
+    const newRoles=new Set(), newRegs=new Set(); const items=[];
+    for(const r of data.rows){
+      const name=String(r.name).trim(), role=canon(r.role,S.lists.roles), region=canon(r.region,S.lists.regions);
+      const it={row:r._row,show:{name,role,region},name,role,region};
+      if(!name){ it.st='err'; it.msg='Name is missing'; items.push(it); continue; }
+      const k=key(name,role,region);
+      if(seen.has(k)){ it.st='skip'; it.msg='Repeats an earlier row in this file'; items.push(it); continue; } seen.add(k);
+      if(exKeys.has(k)){ it.st='skip'; it.msg='Already in the team with the same name, role and location'; items.push(it); continue; }
+      if(mode==='overwrite'){
+        const same=people.filter(p=>low(p.name)===low(name));
+        if(same.length>1){ it.st='err'; it.msg='More than one person has this name. Update them on the Team tab instead.'; items.push(it); continue; }
+        if(same.length===1){ const p=same[0];
+          if(touched.has(p.id)){ it.st='skip'; it.msg='This person is already updated by an earlier row'; items.push(it); continue; }
+          touched.add(p.id); it.st='upd'; it.target=p; it.msg=`Was ${p.role||'no role'}, ${p.region||'no location'}`; }
+        else it.st='new';
+      } else { it.st='new'; if(people.some(p=>low(p.name)===low(name))) it.msg='Another person with this name exists; added as a separate person'; }
+      if(role && !S.lists.roles.includes(role)) newRoles.add(role);
+      if(region && !S.lists.regions.includes(region)) newRegs.add(region);
+      items.push(it);
+    }
+    const notes=[`From “${f.name}”, sheet ${data.sheet}: ${data.rows.length} row${data.rows.length>1?'s':''}.`];
+    if(newRoles.size) notes.push('New roles that will be added to the list: '+[...newRoles].join(', ')+'.');
+    if(newRegs.size) notes.push('New locations that will be added to the list: '+[...newRegs].join(', ')+'.');
+    return {items,notes,newRoles,newRegs};
+  };
+  runImportDialog('Import people',`Check the rows below, choose how to import, then confirm. Nothing is saved until you choose Import.`,'team',analyse,[['name','Name'],['role','Role'],['region','Location']],'',res=>{
+    if(res.newRoles.size||res.newRegs.size){ S.lists.roles=[...S.lists.roles,...res.newRoles]; S.lists.regions=[...S.lists.regions,...res.newRegs]; saveLists(); }
+    let a=0,u=0;
+    for(const it of res.items){
+      if(it.st==='new'){ saveDoc('people',{id:newId('people'),name:it.name,role:it.role,region:it.region}); a++; }
+      else if(it.st==='upd'){ const p=S.people.get(it.target.id); if(p){ saveDoc('people',{...p,role:it.role,region:it.region}); u++; } }
+    }
+    toast(`Imported: ${a} added, ${u} updated.`); schedule();
+  });
+}); });
+
+/* projects */
+const PROJ_COLS=[{key:'name',label:'Project',req:1,alias:['project','project name','name']},{key:'brand',label:'Brand',req:0,alias:['brand']},{key:'category',label:'Category',req:0,alias:['category']},
+  {key:'start',label:'Start date',req:0,alias:['start date','start','start_date']},{key:'end',label:'End date',req:0,alias:['end date','end','end_date']},{key:'status',label:'Status',req:0,alias:['status']},{key:'detail',label:'Details',req:0,alias:['details','detail','description','notes']}];
+function projectsBook(rows){
+  const wb=XLSX.utils.book_new();
+  const ws=sheetFrom([['Brand','Category','Project','Start date','End date','Status','Details'],...rows],[12,18,36,13,13,20,60]);
+  for(let i=0;i<rows.length;i++) for(const c of ['D','E']){ const cell=ws[c+(i+2)]; if(cell&&cell.t==='n') cell.z='dd/mm/yyyy'; }
+  XLSX.utils.book_append_sheet(wb,ws,'Projects');
+  XLSX.utils.book_append_sheet(wb,sheetFrom([['How to use this template'],[''],['1. Fill in one project per row on the Projects sheet. Keep the column names in row 1. Only Project is required.'],['2. Brand and Category should match the Valid values sheet. A blank Brand becomes '+(S.lists.brands[0]||'Lucky')+'. New values are added to the lists when you import.'],['3. Dates: use Excel dates, or type them as 31/12/2026 (day/month/year) or 2026-12-31. Leave blank or write N/A if not set.'],['4. On the Projects tab, choose Import from Excel and pick this file. You can check every row before anything is saved.'],[''],['Append adds the rows as new projects. A row is skipped if a project with the same brand and name already exists.'],['Overwrite updates the existing project with the same name (brand, category, dates, status and details), and adds new projects. Projects not in the file are kept, and their people and weekly FTE are never changed.']],[120]),'Instructions');
+  XLSX.utils.book_append_sheet(wb,listsSheet([['Brand',S.lists.brands],['Category',S.lists.categories]]),'Valid values');
+  return wb; }
+function excelDate(iso){ const t=parseD(iso); return t==null? '' : (t-Date.UTC(1899,11,30))/DAY; }
+$('#tplProjects').addEventListener('click',()=>{ if(xlsxReady()) saveBook(projectsBook([]),'Projects_import_template.xlsx'); });
+$('#expProjects').addEventListener('click',()=>{ if(!xlsxReady()) return;
+  const rows=sortedProjects().map(p=>[pBrand(p),p.category||'',p.name,excelDate(p.start),excelDate(p.end),p.status||'',p.detail||'']);
+  if(!rows.length){ toast('There are no projects to export yet.'); return; }
+  saveBook(projectsBook(rows),'Projects_export_'+stamp()+'.xlsx'); });
+$('#impProjects').addEventListener('click',()=>{ if(S.readOnly||!xlsxReady()) return; pickFile($('#fileProjects'),async f=>{
+  let data; try{ data=await readRows(f,'Projects',PROJ_COLS); }catch(e){ toast('That file could not be read. Save it as .xlsx and try again.'); return; }
+  if(data.error){ toast(data.error); return; }
+  if(!data.rows.length){ toast('The file has no projects in it. Add rows under the column names and try again.'); return; }
+  const analyse=mode=>{
+    const projects=[...S.projects.values()]; const seen=new Set(), touched=new Set(); const newBrands=new Set(), newCats=new Set(); const items=[];
+    for(const r of data.rows){
+      const name=String(r.name).trim(); const brand=canon(r.brand,S.lists.brands)||S.lists.brands[0]||'Lucky'; const category=canon(r.category,S.lists.categories);
+      const start=parseCellDate(r.start), end=parseCellDate(r.end); const status=String(r.status).trim(), detail=String(r.detail).trim();
+      const it={row:r._row,name,brand,category,start,end,status,detail,show:{brand,category,name,start:start?fmtDate(start):(start===null?'N/A':String(r.start)),end:end?fmtDate(end):(end===null?'N/A':String(r.end)),status}};
+      if(!name){ it.st='err'; it.msg='Project name is missing'; items.push(it); continue; }
+      if(start===undefined||end===undefined){ it.st='err'; it.msg=`${start===undefined?'Start':'End'} date is not a date. Use 31/12/2026 or an Excel date.`; items.push(it); continue; }
+      const k=low(brand)+'|'+low(name);
+      if(seen.has(k)){ it.st='skip'; it.msg='Repeats an earlier row in this file'; items.push(it); continue; } seen.add(k);
+      const exact=projects.filter(p=>low(pBrand(p))===low(brand)&&low(p.name)===low(name));
+      if(mode==='append'){
+        if(exact.length){ it.st='skip'; it.msg='Already in the plan with the same brand and name'; items.push(it); continue; }
+        it.st='new';
+      } else {
+        let m=exact; if(!m.length) m=projects.filter(p=>low(p.name)===low(name));
+        if(m.length>1){ it.st='err'; it.msg='More than one project has this name. Update it on the Projects tab instead.'; items.push(it); continue; }
+        if(m.length===1){ const p=m[0];
+          if(touched.has(p.id)){ it.st='skip'; it.msg='This project is already updated by an earlier row'; items.push(it); continue; }
+          const same=pBrand(p)===brand&&(p.category||'')===category&&(p.start||null)===start&&(p.end||null)===end&&(p.status||'')===status&&(p.detail||'')===detail;
+          if(same){ it.st='skip'; it.msg='No changes'; items.push(it); continue; }
+          touched.add(p.id); it.st='upd'; it.target=p; it.msg='Replaces the current details';
+        } else it.st='new';
+      }
+      if(start&&end&&parseD(end)<parseD(start)) it.msg=(it.msg?it.msg+'. ':'')+'End is before start';
+      if(!S.lists.brands.includes(brand)) newBrands.add(brand);
+      if(category && !S.lists.categories.includes(category)) newCats.add(category);
+      items.push(it);
+    }
+    const notes=[`From “${f.name}”, sheet ${data.sheet}: ${data.rows.length} row${data.rows.length>1?'s':''}.`];
+    if(newBrands.size) notes.push('New brands that will be added to the list: '+[...newBrands].join(', ')+'.');
+    if(newCats.size) notes.push('New categories that will be added to the list: '+[...newCats].join(', ')+'.');
+    return {items,notes,newBrands,newCats};
+  };
+  runImportDialog('Import projects','Check the rows below, choose how to import, then confirm. Nothing is saved until you choose Import. People and weekly FTE on existing projects are never changed.','projects',analyse,
+    [['brand','Brand'],['category','Category'],['name','Project'],['start','Start'],['end','End'],['status','Status']],
+    `<label class="check" style="margin:10px 0 0;font-weight:500;color:var(--ink)"><input type="checkbox" name="roles" checked> Add one row for each role to new projects</label>`,
+    (res,fd)=>{
+      if(res.newBrands.size||res.newCats.size){ S.lists.brands=[...S.lists.brands,...res.newBrands]; S.lists.categories=[...S.lists.categories,...res.newCats]; saveLists(); }
+      let order=Math.max(0,...[...S.projects.values()].map(p=>p.order||0)); let a=0,u=0; const withRoles=!!fd.get('roles');
+      for(const it of res.items){
+        const fields={brand:it.brand,category:it.category,name:it.name,start:it.start||null,end:it.end||null,status:it.status,detail:it.detail};
+        if(it.st==='new'){ const id=newId('projects'); order++; saveDoc('projects',{id,...fields,order}); a++;
+          if(withRoles) S.lists.roles.forEach((role,i)=>saveDoc('resources',{id:newId('resources'),project:id,role,personId:null,order:i+1,fte:zeros()})); }
+        else if(it.st==='upd'){ const p=S.projects.get(it.target.id); if(p){ saveDoc('projects',{...p,...fields,name:p.name}); u++; } }
+      }
+      toast(`Imported: ${a} project${a===1?'':'s'} added, ${u} updated.`); schedule();
+    });
+}); });
+
 /* ---------- export ---------- */
 $('#exportBtn').addEventListener('click',async()=>{
   if(!window.XLSX){ toast('The Excel exporter is still loading. Try again in a moment.'); return; }
@@ -932,7 +1232,7 @@ function subscribe(){
   if(!db){ S.noDb=true; setSave(); const st=$('#planState'); st.innerHTML='<h2>Open the plan from its Claude link</h2><p>The plan is saved in shared storage, which this copy of the page cannot reach. Open it from its claude.ai link to load and edit it.</p>'; return; }
   S.db=db; subscribe(); setSave();
   try{ S.dl= await window.claude.use('downloads'); }catch(e){ S.dl=null; }
-  $('#exportBtn').hidden=!S.dl;
+  $('#exportBtn').hidden=!S.dl; $('#tplTeam').hidden=!S.dl; $('#tplProjects').hidden=!S.dl; $('#expTeam').hidden=!S.dl; $('#expProjects').hidden=!S.dl;
 })();
 })();
 </script>

@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 REPO="${1:?GitHub repository as owner/name, e.g. my-company/lucky-resource-plan}"
-REGION="${2:-${AWS_REGION:-eu-west-2}}"
+REGION="${2:-${AWS_REGION:-$(aws configure get region 2>/dev/null || echo eu-west-2)}}"
 STACK="${3:-lucky-resource-plan}"
 BRANCH="${4:-main}"
 APPROVAL="${5:-false}"

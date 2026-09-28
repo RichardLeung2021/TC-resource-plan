@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  Adopts an existing CodeBuild project (for example one made by the CodePipeline
+  console wizard) so it can deploy the Live Team Resource Plan: stores the team
+  passcode in Secrets Manager and gives the project's service role the deploy
+  permissions. Used by scripts/fix-existing-pipeline.sh.
+
+Parameters:
+  BuildRoleName:
+    Type: String
+    Description: Name (not ARN) of the existing CodeBuild service role
+  AppStackName:
+    Type: String
+    Default: lucky-resource-plan
+    AllowedPattern: '^[a-z][a-z0-9-]{2,40}$'
+    Description: Name of the app stack to deploy (lower case)
+  Passcode:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: Team passcode for the page (8 or more characters)
+
+Resources:
+  PasscodeSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${AppStackName}/build-passcode'
+      Description: Team passcode for the Live Team Resource Plan page
+      SecretString: !Ref Passcode
+
+  DeployPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Lets the build deploy the Live Team Resource Plan app stack and read its passcode
+      Roles: [!Ref BuildRoleName]
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: CloudFormationStacks
+            Effect: Allow
+            Action: 'cloudformation:*'
+            Resource:
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/${AppStackName}/*'
+              - !Sub 'arn:aws:cloudformation:*:${AWS::AccountId}:stack/aws-sam-cli-managed-default/*'
+          - Sid: CloudFormationGeneral
+            Effect: Allow
+            Action:
+              - cloudformation:CreateChangeSet
+              - cloudformation:DescribeStacks
+              - cloudformation:GetTemplateSummary
+              - cloudformation:ListStacks
+              - cloudformation:ValidateTemplate
+            Resource: '*'
+          - Sid: SamArtifactsAndSiteBuckets
+            Effect: Allow
+            Action: 's3:*'
+            Resource:
+              - 'arn:aws:s3:::aws-sam-cli-managed-default-*'
+              - 'arn:aws:s3:::aws-sam-cli-managed-default-*/*'
+              - !Sub 'arn:aws:s3:::${AppStackName}-sitebucket-*'
+              - !Sub 'arn:aws:s3:::${AppStackName}-sitebucket-*/*'
+          - Sid: LambdaFunction
+            Effect: Allow
+            Action: 'lambda:*'
+            Resource: !Sub 'arn:aws:lambda:*:${AWS::AccountId}:function:${AppStackName}-*'
+          - Sid: DynamoDBTable
+            Effect: Allow
+            Action:
+              - dynamodb:CreateTable
+              - dynamodb:DescribeTable
+              - dynamodb:UpdateTable
+              - dynamodb:DescribeContinuousBackups
+              - dynamodb:UpdateContinuousBackups
+              - dynamodb:DescribeTimeToLive
+              - dynamodb:TagResource
+              - dynamodb:UntagResource
+              - dynamodb:ListTagsOfResource
+            Resource: !Sub 'arn:aws:dynamodb:*:${AWS::AccountId}:table/${AppStackName}-*'
+          - Sid: ApiGateway
+            Effect: Allow
+            Action: 'apigateway:*'
+            Resource: 'arn:aws:apigateway:*::/*'
+          - Sid: CloudFront
+            Effect: Allow
+            Action: 'cloudfront:*'
+            Resource: '*'
+          - Sid: FunctionRole
+            Effect: Allow
+            Action:
+              - iam:CreateRole
+              - iam:DeleteRole
+              - iam:GetRole
+              - iam:PassRole
+              - iam:TagRole
+              - iam:UntagRole
+              - iam:UpdateAssumeRolePolicy
+              - iam:DetachRolePolicy
+              - iam:PutRolePolicy
+              - iam:DeleteRolePolicy
+              - iam:GetRolePolicy
+              - iam:ListRolePolicies
+              - iam:ListAttachedRolePolicies
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AppStackName}-PlanFunctionRole-*'
+          - Sid: FunctionRoleManagedPolicyOnlyLambdaBasic
+            Effect: Allow
+            Action: iam:AttachRolePolicy
+            Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AppStackName}-PlanFunctionRole-*'
+            Condition:
+              ArnEquals:
+                iam:PolicyARN: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
+          - Sid: ReadPasscode
+            Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: !Ref PasscodeSecret
+
+Outputs:
+  PasscodeSecretArn:
+    Value: !Ref PasscodeSecret

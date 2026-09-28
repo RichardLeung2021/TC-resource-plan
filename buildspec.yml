@@ -16,6 +16,15 @@ phases:
       - sam --version || pip3 install --quiet aws-sam-cli
       - sam --version
 
+  pre_build:
+    commands:
+      - |
+        missing=0
+        if [ -z "${STACK_NAME:-}" ]; then echo "STACK_NAME is not set. Create the pipeline with scripts/setup-codepipeline.sh (infra/codepipeline.yaml)."; missing=1; fi
+        if [ -z "${PLAN_PASSCODE:-}" ]; then echo "PLAN_PASSCODE is not set. It should come from the Secrets Manager secret created by infra/codepipeline.yaml."; missing=1; fi
+        if [ ! -f template.yaml ] || [ ! -d frontend ]; then echo "template.yaml or frontend/ not found. template.yaml must be at the top level of the repository."; missing=1; fi
+        exit $missing
+
   build:
     commands:
       - echo "Deploying stack $STACK_NAME to $AWS_REGION"

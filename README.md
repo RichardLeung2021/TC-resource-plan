@@ -127,6 +127,38 @@ GitHub (push to main) ──► CodePipeline ──► [optional manual approval
 
 **Already deployed the app another way?** Keep the same app stack name. The pipeline takes over that stack, and your data stays.
 
+### Setting it up from the AWS console instead
+
+You can create the same pipeline without the command line:
+
+1. Open **CloudFormation > Create stack > With new resources**.
+2. Choose **Upload a template file** and pick `infra/codepipeline.yaml`.
+3. Enter the parameters. At minimum:
+   - **RepositoryId**, for example `my-company/lucky-resource-plan`
+   - **Passcode**
+4. On the last page, tick the box that acknowledges IAM resources, then create the stack.
+5. Continue from step 3 above: approve the GitHub connection, then choose **Release change**.
+
+Do **not** use the CodePipeline console's **Create pipeline** wizard or its starter templates. These build a Docker image and push it to ECR, which this app doesn't use. They fail with `open Dockerfile: no such file or directory`.
+
+### Troubleshooting
+
+- **The build fails at `docker build` / `Dockerfile: no such file or directory`:** the pipeline was made by the console wizard's Docker template. You have two ways to fix it.
+  - **Repair it in place (quickest).** You keep the wizard's pipeline and its GitHub connection.
+    1. Open **AWS CloudShell** in the same region.
+    2. Upload this zip, then run `unzip lucky-resource-plan-aws.zip && cd lucky-resource-plan-aws`.
+    3. Run `./scripts/fix-existing-pipeline.sh eu-north-1` (use your region).
+
+    The script asks which CodeBuild project the pipeline uses and asks for the team passcode. It then:
+    - stores the passcode in Secrets Manager;
+    - gives the build permission to deploy this app;
+    - switches the project to this repository's `buildspec.yml`;
+    - offers to remove leftover Docker/ECS stages;
+    - starts a new run.
+  - **Or create a fresh pipeline** from `infra/codepipeline.yaml`, as described above, and delete the wizard's one.
+- **The build stops at "STACK_NAME is not set" or "PLAN_PASSCODE is not set":** the CodeBuild project was not created from `infra/codepipeline.yaml`. Create the pipeline from the template.
+- **The Source stage fails with a connection error:** the GitHub connection is still *Pending*. Approve it (step 3 above), then choose **Release change**.
+
 ### Changing things later
 
 - **Change the passcode:**
